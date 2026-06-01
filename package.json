@@ -1,0 +1,8 @@
+{
+  "name": "sortify",
+  "version": "1.0.0",
+  "description": "An intelligent AI-powered email organizer that connects to Gmail, uses Gemini AI to analyze your inbox, and automatically categorizes incoming mail using nested labels and smart rules.",
+  "dependencies": {
+    "gsap": "^3.13.0"
+  }
+}
