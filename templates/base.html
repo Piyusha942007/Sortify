@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ title or "Sortify • Email Rules" }}</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts + Material Icons (Gmail vibe) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+  <!-- Intro.js for interactive tutorial -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js/minified/introjs.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/intro.js/minified/intro.min.js"></script>
+
+  <!-- Animate.css for tiny pop effects -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body class="bg-[#f6f8fc] text-slate-800" style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;">
+  <!-- Top Nav (Gmail-ish) -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="material-icons-outlined text-[#d93025] text-3xl">mail</span>
+        <h1 class="text-xl font-extrabold tracking-tight">Sortify</h1>
+        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-[#e8f0fe] text-[#1a73e8] font-semibold">Gmail Rules</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btn-start-tour"
+                class="tour-btn px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition text-sm"
+                onclick="startTutorial()">
+          <span class="material-icons-outlined text-base align-middle mr-1">play_circle</span>
+          Start Tutorial
+        </button>
+
+        {% if creds %}
+          <a href="{{ url_for('logout') }}"
+             class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition text-sm">
+            <span class="material-icons-outlined text-base align-middle mr-1">logout</span>
+            Logout
+          </a>
+        {% else %}
+          <a href="{{ url_for('authorize') }}"
+             class="px-3 py-1.5 rounded-lg bg-[#1a73e8] text-white hover:bg-[#185abc] transition text-sm">
+            <span class="material-icons-outlined text-base align-middle mr-1">login</span>
+            Login with Google
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Container -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Tiny toast -->
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-black/85 text-white text-sm px-4 py-2 rounded-lg shadow-lg"></div>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/tutorial.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
+</body>
+</html>

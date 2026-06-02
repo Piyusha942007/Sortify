@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sortify — Your inbox, reimagined.</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="app-container">
+        <header>
+            <nav class="navbar glass-panel">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i data-lucide="mail" style="color: white; width: 20px;"></i>
+                    </div>
+                    Sortify
+                </div>
+                <div class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#how-it-works">How it Works</a>
+                    {% if user_email %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 50px;">
+                            {% if user_picture %}
+                                <img src="{{ user_picture }}" alt="" style="width: 24px; height: 24px; border-radius: 50%;">
+                            {% endif %}
+                            Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-glass">Dashboard</a>
+                        <a href="{{ url_for('authorize') }}" class="btn btn-primary">Connect Gmail</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </header>
+
+        <main class="hero">
+            <div class="hero-content">
+                <h1>Your inbox,<br>reimagined<br>in motion.</h1>
+                <p>The beautiful AI layer on top of Gmail. Automatically categorize, organize, and clean your inbox with intelligent automation.</p>
+                <div class="cta-group">
+                    {% if user_email %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.1rem; border-radius: 50px;">
+                            Go to Dashboard
+                            <i data-lucide="arrow-right"></i>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('authorize') }}" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.1rem; border-radius: 50px;">
+                            Connect Gmail
+                            <i data-lucide="arrow-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="hero-visual" id="hero-visual">
+                <div class="floating-card card-main" id="card-inbox">
+                    <div class="card-icon">
+                        <i data-lucide="inbox" style="color: white;"></i>
+                    </div>
+                    <h3>Inbox</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">Smartly organized.</p>
+                </div>
+
+                <div class="floating-card card-secondary" id="card-rules">
+                    <div class="card-icon" style="background: var(--accent);">
+                        <i data-lucide="layers" style="color: white;"></i>
+                    </div>
+                    <h3>Rules</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">Active automation.</p>
+                </div>
+
+                <div class="floating-card card-tertiary" id="card-insights">
+                    <div class="card-icon" style="background: #10b981;">
+                        <i data-lucide="bar-chart-3" style="color: white;"></i>
+                    </div>
+                    <h3>Insights</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">AI Statistics.</p>
+                </div>
+            </div>
+        </main>
+
+        <section id="features" class="features-section">
+            <h2 class="section-title">Intelligent Inbox Control</h2>
+            <div class="feature-grid">
+                <div class="glass-panel feature-card">
+                    <i data-lucide="brain-circuit" class="feature-icon"></i>
+                    <h3>AI Categorization</h3>
+                    <p>Gemini-powered analysis detects patterns and categorizes your emails before you even read them.</p>
+                </div>
+                <div class="glass-panel feature-card">
+                    <i data-lucide="wand-2" class="feature-icon"></i>
+                    <h3>Natural Language Rules</h3>
+                    <p>Simply type "Sort my shopping receipts" and Sortify builds the automation for you.</p>
+                </div>
+                <div class="glass-panel feature-card">
+                    <i data-lucide="shield-check" class="feature-icon"></i>
+                    <h3>Privacy First</h3>
+                    <p>Your data is processed securely through official Google APIs. We never store your email content.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works" class="how-it-works">
+            <h2 class="section-title">How it Works</h2>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h4>Connect</h4>
+                    <p>Link your Gmail account securely via Google OAuth.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h4>Analyze</h4>
+                    <p>Sortify scans your inbox patterns to suggest smart labels.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h4>Automate</h4>
+                    <p>Sit back as your emails are sorted, archived, and cleaned.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-content glass-panel">
+                <div class="brand">Sortify</div>
+                <p>&copy; 2026 Sortify AI. All rights reserved.</p>
+                <div class="socials">
+                    <a href="#"><i data-lucide="twitter"></i></a>
+                    <a href="#"><i data-lucide="github"></i></a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // GSAP Animations
+        gsap.from(".hero-content h1", {
+            y: 50,
+            opacity: 0,
+            duration: 1,
+            ease: "power4.out"
+        });
+
+        gsap.from(".hero-content p", {
+            y: 30,
+            opacity: 0,
+            duration: 1,
+            delay: 0.2,
+            ease: "power4.out"
+        });
+
+        gsap.from(".cta-group", {
+            y: 20,
+            opacity: 0,
+            duration: 1,
+            delay: 0.4,
+            ease: "power4.out"
+        });
+
+        // Floating animation for cards
+        gsap.to("#card-inbox", {
+            y: -20,
+            duration: 3,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut"
+        });
+
+        gsap.to("#card-rules", {
+            y: 15,
+            duration: 4,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+            delay: 0.5
+        });
+
+        gsap.to("#card-insights", {
+            y: -10,
+            duration: 3.5,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+            delay: 1
+        });
+
+        // Parallax mouse effect
+        const visual = document.getElementById('hero-visual');
+        document.addEventListener('mousemove', (e) => {
+            const { clientX, clientY } = e;
+            const xPos = (clientX / window.innerWidth - 0.5) * 40;
+            const yPos = (clientY / window.innerHeight - 0.5) * 40;
+
+            gsap.to("#card-inbox", {
+                x: xPos * 1.5,
+                y: yPos * 1.5,
+                rotateY: xPos * 0.5,
+                rotateX: -yPos * 0.5,
+                duration: 0.6,
+                ease: "power2.out"
+            });
+
+            gsap.to("#card-rules", {
+                x: xPos * 0.8,
+                y: yPos * 0.8,
+                rotateY: xPos * 0.3,
+                rotateX: -yPos * 0.3,
+                duration: 0.6,
+                ease: "power2.out"
+            });
+
+            gsap.to("#card-insights", {
+                x: xPos * 0.5,
+                y: yPos * 0.5,
+                rotateY: xPos * 0.2,
+                rotateX: -yPos * 0.2,
+                duration: 0.6,
+                ease: "power2.out"
+            });
+        });
+
+        // Simple background particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const p = document.createElement('div');
+            p.style.position = 'absolute';
+            p.style.width = Math.random() * 4 + 'px';
+            p.style.height = p.style.width;
+            p.style.background = 'rgba(255,255,255,0.1)';
+            p.style.borderRadius = '50%';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.top = Math.random() * 100 + '%';
+            particlesContainer.appendChild(p);
+
+            gsap.to(p, {
+                y: '-100vh',
+                duration: Math.random() * 10 + 10,
+                repeat: -1,
+                ease: "none",
+                delay: Math.random() * 10
+            });
+        }
+    </script>
+</body>
+</html>
