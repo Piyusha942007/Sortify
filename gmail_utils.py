@@ -51,6 +51,43 @@ def ensure_label_exists(service, label_name):
     ).execute()
     return label["id"]
 
+def get_email_details(service, msg_id):
+    try:
+        message = service.users().messages().get(userId='me', id=msg_id, format='full').execute()
+        payload = message.get('payload', {})
+        headers = payload.get('headers', [])
+        
+        subject = next((h['value'] for h in headers if h['name'].lower() == 'subject'), 'No Subject')
+        sender = next((h['value'] for h in headers if h['name'].lower() == 'from'), 'Unknown Sender')
+        
+        body = ""
+        def parse_parts(parts):
+            body_text = ""
+            for part in parts:
+                mime_type = part.get('mimeType')
+                if mime_type == 'text/plain':
+                    data = part.get('body', {}).get('data', '')
+                    if data:
+                        body_text += base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
+                elif 'parts' in part:
+                    body_text += parse_parts(part['parts'])
+            return body_text
+
+        if 'parts' in payload:
+            body = parse_parts(payload['parts'])
+        else:
+            data = payload.get('body', {}).get('data', '')
+            if data:
+                body = base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
+                
+        if not body:
+            body = "No text content."
+            
+        return {"sender": sender, "subject": subject, "body": body[:2000]}
+    except Exception as e:
+        print(f"Error fetching email details for {msg_id}: {e}")
+        return None
+
 def apply_single_rule(rule, google_id):
     service = get_gmail_service(google_id)
     if not service:
@@ -78,6 +115,44 @@ def apply_single_rule(rule, google_id):
             userId="me",
             body={"ids": ids, "addLabelIds": [label_id]}
         ).execute()
+
+    # Trigger custom AI auto-reply draft generation if configured
+    reply_template = rule.get("reply_template")
+    rule_id = rule.get("id")
+    if reply_template and rule_id:
+        from database import is_email_processed, mark_email_processed
+        from ai_utils import generate_reply_draft
+        
+        print(f"DEBUG: Processing AI auto-reply drafts for rule {rule_id} using template: {reply_template[:30]}...")
+        for msg in messages:
+            msg_id = msg["id"]
+            if not is_email_processed(msg_id):
+                details = get_email_details(service, msg_id)
+                if details:
+                    # Construct prompt for templated reply
+                    prompt = (
+                        f"Reply Prompt Instruction Guideline: {reply_template}\n\n"
+                        f"Sender: {details['sender']}\n"
+                        f"Subject: {details['subject']}\n"
+                        f"Body Content:\n{details['body']}"
+                    )
+                    
+                    system_instruction = (
+                        "You are an AI assistant helping a user write automated draft replies to emails. "
+                        "Read the sender, subject, body, and the user's specific Reply Prompt Instruction Guideline. "
+                        "Write a draft reply matching the user's instructions exactly. "
+                        "Keep the reply concise, professional, and clear. "
+                        "Return ONLY the body of the email. Do not include subject line, headers, salutations like 'Subject:', "
+                        "or any markdown formatting outside of standard text line breaks."
+                    )
+                    
+                    try:
+                        reply_body = generate_reply_draft(prompt, system_instruction=system_instruction)
+                        create_gmail_draft(google_id, details['sender'], details['subject'], reply_body)
+                        mark_email_processed(msg_id, google_id, rule_id)
+                        print(f"DEBUG: Draft reply successfully created for {msg_id} matching rule {rule_id}")
+                    except Exception as e:
+                        print(f"DEBUG: Failed to auto-draft reply for {msg_id}: {e}")
 
     return f"Applied rule {rule['label']} → {rule['domain']} to {len(messages)} emails"
 

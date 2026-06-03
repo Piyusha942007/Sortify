@@ -353,11 +353,24 @@
                         <p style="color: var(--text-muted); font-size: 0.875rem;">Enter a label name and the domain you want to automatically categorize.</p>
                         
                         <form id="addRuleForm" onsubmit="handleAdd(event)" style="margin-bottom: 2rem;">
-                            <div class="input-group">
+                            <div class="input-group" style="margin-bottom: 1rem;">
                                 <input type="text" name="label" placeholder="Label Name (e.g. Shopping)" required>
                                 <input type="text" name="domain" placeholder="Domain (e.g. amazon.com)" required>
-                                <button type="submit" class="btn btn-primary" id="addBtn">Add Rule</button>
                             </div>
+                            <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="enableAutoReply" onchange="toggleAutoReplyInput(this)" style="flex: 0; width: auto; margin-right: 0.5rem; cursor: pointer;">
+                                <label for="enableAutoReply" style="font-size: 0.875rem; color: var(--text-muted); cursor: pointer; user-select: none;">Enable AI Auto-Reply Drafts for this rule</label>
+                            </div>
+                            <div id="autoReplyContainer" style="display: none; margin-bottom: 1rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-glass);">
+                                <label style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.5rem; display: block;">Reply Template / Instruction Prompt</label>
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                    <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Polite Rejection')">Polite Rejection</button>
+                                    <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Acceptance/Meeting')">Accept/Meeting</button>
+                                    <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Standard Acknowledgment')">Acknowledge</button>
+                                </div>
+                                <input type="text" id="replyTemplateInput" name="reply_template" placeholder="e.g. Write a polite rejection stating that we are currently fully staffed." style="width: 100%;">
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="addBtn" style="width: 100%;">Add Rule</button>
                         </form>
 
                         <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; border-top: 1px solid var(--border-glass); pt: 2rem; margin-top: 2rem; padding-top: 2rem;">
@@ -378,15 +391,34 @@
                                 {% for rule in rules if '/' not in rule.label %}
                                     <div class="rule-item" id="rule-{{ rule.id }}" data-label="{{ rule.label.lower() }}" style="flex-direction: column; align-items: stretch; padding: 1.5rem;">
                                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                            <div class="rule-info">
-                                                <h4 class="rule-label-display">{{ rule.label }}</h4>
+                                            <div class="rule-info" style="flex: 1; margin-right: 1rem;">
+                                                <h4 class="rule-label-display" style="display: flex; align-items: center; gap: 0.5rem;">
+                                                    {{ rule.label }}
+                                                    {% if rule.reply_template %}
+                                                        <span class="urgency-pill urgency-Low" style="font-size: 0.65rem; background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent); color: var(--text-main); font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                                            <i data-lucide="bot" style="width: 12px; height: 12px;"></i> AI Auto-Reply
+                                                        </span>
+                                                    {% endif %}
+                                                </h4>
                                                 <p>from:{{ rule.domain }}</p>
+                                                {% if rule.reply_template %}
+                                                    <p style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem; font-style: italic;">
+                                                        "{{ rule.reply_template }}"
+                                                    </p>
+                                                {% endif %}
                                                 
                                                 <div class="edit-mode" style="display: none; margin-top: 0.5rem;">
-                                                    <div style="display: flex; gap: 0.5rem;">
+                                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                                                         <input type="text" class="edit-input" value="{{ rule.label }}" style="padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; width: 100%;">
-                                                        <button onclick="saveEdit({{ rule.id }})" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Save</button>
-                                                        <button onclick="toggleEdit({{ rule.id }})" class="btn btn-glass" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Cancel</button>
+                                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                                                            <input type="checkbox" class="edit-enable-reply" id="edit-enable-reply-{{ rule.id }}" {% if rule.reply_template %}checked{% endif %} onchange="toggleEditReplyInput({{ rule.id }})" style="width: auto; cursor: pointer;">
+                                                            <label for="edit-enable-reply-{{ rule.id }}" style="font-size: 0.75rem; color: var(--text-muted); cursor: pointer;">Enable AI Auto-Reply</label>
+                                                        </div>
+                                                        <input type="text" class="edit-reply-template" id="edit-reply-template-{{ rule.id }}" value="{{ rule.reply_template or '' }}" placeholder="AI Reply Prompt (e.g. Reply politely)" style="padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; width: 100%; {% if not rule.reply_template %}display: none;{% endif %}">
+                                                        <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                                                            <button onclick="saveEdit({{ rule.id }})" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Save</button>
+                                                            <button onclick="toggleEdit({{ rule.id }})" class="btn btn-glass" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Cancel</button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -564,6 +596,9 @@
             const el = document.getElementById(`rule-${id}`);
             const input = el.querySelector('.edit-input');
             const newLabel = input.value.trim();
+            const checkbox = document.getElementById(`edit-enable-reply-${id}`);
+            const replyInput = document.getElementById(`edit-reply-template-${id}`);
+            const replyTemplate = checkbox.checked ? replyInput.value.trim() : "";
             
             if (!newLabel) return showToast("Label cannot be empty", "error");
 
@@ -577,6 +612,7 @@
             try {
                 const formData = new FormData();
                 formData.append('label', newLabel);
+                formData.append('reply_template', replyTemplate);
                 
                 const response = await fetch(`/edit_rule/${id}`, {
                     method: 'POST',
@@ -585,16 +621,36 @@
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    el.querySelector('.rule-label-display').innerText = newLabel;
-                    el.dataset.label = newLabel.toLowerCase();
-                    toggleEdit(id);
                     showToast(data.message);
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     showToast(data.message, 'error');
                 }
             } catch (e) {
                 showToast("Connection failed", "error");
             }
+        }
+
+        function toggleAutoReplyInput(checkbox) {
+            const container = document.getElementById('autoReplyContainer');
+            container.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        function setReplyTemplate(type) {
+            const input = document.getElementById('replyTemplateInput');
+            if (type === 'Polite Rejection') {
+                input.value = "Write a professional and polite rejection draft, expressing gratitude for their time but explaining that we cannot proceed at this time.";
+            } else if (type === 'Acceptance/Meeting') {
+                input.value = "Write an enthusiastic acceptance response confirming that I am available to meet and asking them to send over a calendar invite link.";
+            } else if (type === 'Standard Acknowledgment') {
+                input.value = "Write a simple email receipt acknowledgment stating that I have received their email and will review it soon.";
+            }
+        }
+
+        function toggleEditReplyInput(id) {
+            const checkbox = document.getElementById(`edit-enable-reply-${id}`);
+            const input = document.getElementById(`edit-reply-template-${id}`);
+            input.style.display = checkbox.checked ? 'block' : 'none';
         }
 
         // Rule Deletion
@@ -643,6 +699,8 @@
             const form = e.target;
             const label = form.label.value.trim();
             const domain = form.domain.value.trim();
+            const enableAutoReply = document.getElementById('enableAutoReply').checked;
+            const replyTemplate = enableAutoReply ? document.getElementById('replyTemplateInput').value.trim() : "";
             const btn = document.getElementById('addBtn');
 
             // Duplicate Check
@@ -655,7 +713,12 @@
             btn.innerText = "Applying...";
 
             try {
-                const formData = new FormData(form);
+                const formData = new FormData();
+                formData.append('label', label);
+                formData.append('domain', domain);
+                if (enableAutoReply && replyTemplate) {
+                    formData.append('reply_template', replyTemplate);
+                }
                 const response = await fetch('/add_rule', {
                     method: 'POST',
                     body: formData

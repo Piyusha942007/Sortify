@@ -127,16 +127,17 @@ def analyze_for_opportunities(email_samples):
         print(f"DEBUG: Opportunity detection failed: {str(e)}")
         return []
 
-def generate_reply_draft(email_content):
-    """Generates a professional reply to an email."""
+def generate_reply_draft(email_content, system_instruction=None):
+    """Generates a professional reply to an email with optional custom guidelines."""
     if not client:
         return "I am interested in this opportunity. Let's discuss further."
 
-    system_instruction = """
-    Write a professional, enthusiastic, and concise reply to the following email.
-    Maintain a helpful and polite tone. 
-    Return ONLY the body text of the reply. No subject line.
-    """
+    if not system_instruction:
+        system_instruction = """
+        Write a professional, enthusiastic, and concise reply to the following email.
+        Maintain a helpful and polite tone. 
+        Return ONLY the body text of the reply. No subject line.
+        """
     
     try:
         response = client.models.generate_content(
@@ -145,5 +146,6 @@ def generate_reply_draft(email_content):
             contents=email_content
         )
         return response.text.strip()
-    except:
+    except Exception as e:
+        print(f"DEBUG: generate_reply_draft failed: {e}")
         return "Thank you for the update. I am excited to move forward with this opportunity."

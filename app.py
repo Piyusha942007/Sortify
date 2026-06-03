@@ -188,14 +188,21 @@ def add_rule():
         
     label = request.form.get("label", "").strip()
     domain = request.form.get("domain", "").strip()
+    reply_template = request.form.get("reply_template", "").strip() or None
+    
     if not label or not domain:
         return redirect(url_for("dashboard", msg="Please fill all fields."))
 
     google_id = session['google_id']
-    db_add_rule(google_id, label, domain)
+    rule_id = db_add_rule(google_id, label, domain, reply_template)
 
     # Apply this rule immediately for this user
-    result = apply_single_rule({"label": label, "domain": domain}, google_id=google_id)
+    result = apply_single_rule({
+        "id": rule_id,
+        "label": label,
+        "domain": domain,
+        "reply_template": reply_template
+    }, google_id=google_id)
     return {"status": "success", "message": result, "label": label, "domain": domain}
 
 @app.route("/delete_rule/<int:rule_id>", methods=["POST"])
@@ -224,6 +231,8 @@ def edit_rule_route(rule_id):
     
     google_id = session['google_id']
     new_label = request.form.get("label", "").strip()
+    new_reply_template = request.form.get("reply_template", "").strip() or None
+    
     if not new_label:
         return {"status": "error", "message": "Label cannot be empty."}, 400
         
@@ -236,8 +245,8 @@ def edit_rule_route(rule_id):
         rename_gmail_label(google_id, old_label, new_label)
         
     # Update DB
-    update_rule(rule_id, google_id, new_label)
-    return {"status": "success", "message": f"Gmail label renamed to '{new_label}'"}
+    update_rule(rule_id, google_id, new_label, new_reply_template)
+    return {"status": "success", "message": f"Rule updated successfully. Gmail label renamed to '{new_label}'"}
 
 # ---- OAuth routes ----
 
