@@ -149,3 +149,26 @@ def generate_reply_draft(email_content, system_instruction=None):
     except Exception as e:
         print(f"DEBUG: generate_reply_draft failed: {e}")
         return "Thank you for the update. I am excited to move forward with this opportunity."
+
+def find_unsubscribe_link_in_body(body_text):
+    """Uses Gemini to find any unsubscribe URL in the email body if no header exists."""
+    if not client or not body_text:
+        return None
+        
+    system_instruction = """
+    Analyze the email body text and locate the absolute URL link for unsubscribing or managing subscription preferences.
+    If multiple links are present, return the most direct unsubscribe link.
+    Return ONLY the raw absolute URL string. If no unsubscribe link is found, return the word "None".
+    Do not include markdown or explanations.
+    """
+    try:
+        response = client.models.generate_content(
+            model="gemini-flash-latest",
+            config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.1),
+            contents=body_text[:4000]
+        )
+        url = response.text.strip()
+        return url if url.lower() != "none" and url.startswith("http") else None
+    except Exception as e:
+        print(f"DEBUG: find_unsubscribe_link_in_body failed: {e}")
+        return None

@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from gmail_utils import (
+from services.gmail_service import (
     apply_single_rule,
     apply_all_rules,
     get_recent_emails,
@@ -12,10 +12,28 @@ from gmail_utils import (
     delete_gmail_label,
     rename_gmail_label,
     get_gmail_service,
-    create_gmail_draft
+    create_gmail_draft,
+    get_email_details,
+    get_newsletters,
+    send_unsubscribe_email
 )
-from ai_utils import suggest_rule_from_text, analyze_emails_for_suggestions, analyze_for_opportunities, generate_reply_draft
-from database import init_db, save_user, get_user_rules, add_rule as db_add_rule, delete_rule, update_rule
+from services.gemini_service import suggest_rule_from_text, analyze_emails_for_suggestions, analyze_for_opportunities, generate_reply_draft
+from services.db_service import (
+    init_db,
+    save_user,
+    get_user_rules,
+    add_rule as db_add_rule,
+    delete_rule,
+    update_rule,
+    get_plugins,
+    set_plugin_enabled,
+    is_plugin_enabled,
+    add_unsubscribed_sender,
+    get_unsubscribed_senders,
+    get_processed_emails_count,
+    supabase
+)
+from plugins.phishing_detector import PhishingDetector
 import json
 
 init_db()
@@ -32,18 +50,72 @@ app = Flask(__name__, template_folder="templates")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
+# In-memory Plugin sync log feed
+live_activity_logs = [
+    "System initialized with SQLite fallback handler.",
+    "Inbox scanning engines ready."
+]
+
+plugin_registry = [
+    PhishingDetector()
+]
+
+def execute_plugins_on_sync(google_id):
+    active_plugins = [p for p in plugin_registry if is_plugin_enabled(p.name)]
+    if not active_plugins:
+        return []
+        
+    print(f"DEBUG: Running {len(active_plugins)} active plugins for user {google_id}...")
+    service = get_gmail_service(google_id)
+    if not service:
+        return []
+        
+    logs = []
+    try:
+        results = service.users().messages().list(userId="me", maxResults=5).execute()
+        messages = results.get("messages", [])
+        for msg in messages:
+            details = get_email_details(service, msg["id"])
+            if details:
+                for plugin in active_plugins:
+                    res = plugin.run(details, google_id)
+                    if res:
+                        log_str = f"[{plugin.name}] Email from '{details['sender'][:30]}' flagged: {res['tag']} — {res['message']}"
+                        logs.append(log_str)
+    except Exception as e:
+        print(f"Error running plugins: {e}")
+        
+    return logs
+
 # Background Worker to sync all users
 def background_sync_worker():
     while True:
         try:
             print("DEBUG: Background Sync Worker starting...")
-            # We need to get all users from Supabase and run their rules
-            from database import supabase
-            users = supabase.table("users").select("google_id").execute()
-            for user in users.data:
-                gid = user['google_id']
+            from services.db_service import supabase
+            users_list = []
+            if supabase:
+                try:
+                    users = supabase.table("users").select("google_id").execute()
+                    users_list = [u['google_id'] for u in users.data]
+                except Exception as e:
+                    print(f"Supabase fetch users failed: {e}")
+            
+            # SQLite fallback
+            if not users_list:
+                import sqlite3
+                conn = sqlite3.connect("february.db")
+                cursor = conn.cursor()
+                cursor.execute("SELECT google_id FROM users")
+                users_list = [row[0] for row in cursor.fetchall()]
+                conn.close()
+
+            for gid in users_list:
                 print(f"DEBUG: Auto-sorting for user {gid}")
                 apply_all_rules(gid)
+                plugin_logs = execute_plugins_on_sync(gid)
+                for log in plugin_logs:
+                    live_activity_logs.insert(0, log)
             print("DEBUG: Background Sync completed. Sleeping for 10 minutes.")
         except Exception as e:
             print(f"DEBUG: Background Sync Error: {e}")
@@ -51,6 +123,7 @@ def background_sync_worker():
 
 # Start the worker thread
 threading.Thread(target=background_sync_worker, daemon=True).start()
+
 # allow plain HTTP for local dev
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = os.getenv("OAUTHLIB_INSECURE_TRANSPORT", "1")
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
@@ -76,7 +149,6 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.profile",
     "openid"
 ]
-# Use 127.0.0.1 consistently to match Google Console entries
 REDIRECT_URI = "http://127.0.0.1:5000/oauth2callback"
 
 @app.route('/')
@@ -97,23 +169,40 @@ def dashboard():
     rules = get_user_rules(google_id)
     stats = get_inbox_stats(google_id)
     
-    # 2. Get AI Suggestions and Opportunities (if possible)
     suggestions = []
     opportunities = []
+    newsletters = []
+    plugins_list = []
+    unsubscribed_list = []
+    
     if creds:
         try:
             email_samples = get_recent_emails(20, google_id)
             samples_str = "\n".join(email_samples)
             suggestions = analyze_emails_for_suggestions(samples_str)
             opportunities = analyze_for_opportunities(samples_str)
+            
+            newsletters = get_newsletters(google_id)
+            plugins_list = get_plugins()
+            unsubscribed_list = get_unsubscribed_senders()
+            
+            replies_count = get_processed_emails_count(google_id)
+            sorted_count = stats.get("total_sorted", 0)
+            time_saved = (sorted_count * 2) + (replies_count * 5)
+            stats["time_saved"] = time_saved
+            stats["replies_drafted"] = replies_count
         except Exception as e:
-            print(f"AI Panel Error: {e}")
+            print(f"Dashboard Panel Error: {e}")
 
     return render_template("index.html", 
                            rules=rules, 
                            stats=stats,
                            suggestions=suggestions,
                            opportunities=opportunities,
+                           newsletters=newsletters,
+                           plugins=plugins_list,
+                           live_logs=live_activity_logs[:15],
+                           unsubscribed=unsubscribed_list,
                            user_name=session.get('user_name'),
                            user_email=session.get('user_email'),
                            user_picture=session.get('user_picture'),
@@ -139,11 +228,15 @@ def ai_rule():
     if not rules:
         return redirect(url_for("dashboard", msg="AI couldn't generate rules for that prompt."))
         
-    current_rules = get_user_rules(google_id)
     applied_count = 0
     for r in rules:
-        db_add_rule(google_id, r['label'], r['domain'])
-        apply_single_rule(r, google_id)
+        rule_id = db_add_rule(google_id, r['label'], r['domain'])
+        apply_single_rule({
+            "id": rule_id,
+            "label": r['label'],
+            "domain": r['domain'],
+            "reply_template": None
+        }, google_id)
         applied_count += 1
         
     return redirect(url_for("dashboard", msg=f"AI added and applied {applied_count} new rules!"))
@@ -158,13 +251,8 @@ def draft_reply():
     subject = request.form.get("subject")
     summary = request.form.get("summary")
     
-    # Extract email for AI context
     email_context = f"Sender: {sender}\nSubject: {subject}\nTopic: {summary}"
-    
-    # Generate AI draft
     reply_body = generate_reply_draft(email_context)
-    
-    # Create in Gmail
     draft = create_gmail_draft(google_id, sender, subject, reply_body)
     
     if draft:
@@ -176,10 +264,15 @@ def draft_reply():
 def sync():
     if 'google_id' not in session:
         return {"status": "error", "message": "Not authorized"}
-    result = apply_all_rules(session['google_id'])
+    google_id = session['google_id']
+    result = apply_all_rules(google_id)
+    
+    # Run active plugins and log outcomes
+    plugin_logs = execute_plugins_on_sync(google_id)
+    for log in plugin_logs:
+        live_activity_logs.insert(0, log)
+        
     return {"status": "success", "result": result}
-
-
 
 @app.route("/add_rule", methods=["POST"])
 def add_rule():
@@ -196,7 +289,6 @@ def add_rule():
     google_id = session['google_id']
     rule_id = db_add_rule(google_id, label, domain, reply_template)
 
-    # Apply this rule immediately for this user
     result = apply_single_rule({
         "id": rule_id,
         "label": label,
@@ -211,16 +303,12 @@ def delete_rule_route(rule_id):
         return {"status": "error", "message": "Not authorized"}, 401
     
     google_id = session['google_id']
-    
-    # Get label name before deleting from DB
     rules = get_user_rules(google_id)
     label_to_delete = next((r['label'] for r in rules if r['id'] == rule_id), None)
     
-    # Delete from Gmail
     if label_to_delete:
         delete_gmail_label(google_id, label_to_delete)
         
-    # Delete from DB
     delete_rule(rule_id, google_id)
     return {"status": "success", "message": "Rule and Gmail label removed."}
 
@@ -236,33 +324,70 @@ def edit_rule_route(rule_id):
     if not new_label:
         return {"status": "error", "message": "Label cannot be empty."}, 400
         
-    # Get old label name
     rules = get_user_rules(google_id)
     old_label = next((r['label'] for r in rules if r['id'] == rule_id), None)
     
-    # Rename in Gmail
     if old_label and old_label.lower() != new_label.lower():
         rename_gmail_label(google_id, old_label, new_label)
         
-    # Update DB
     update_rule(rule_id, google_id, new_label, new_reply_template)
     return {"status": "success", "message": f"Rule updated successfully. Gmail label renamed to '{new_label}'"}
 
-# ---- OAuth routes ----
+# ---- Hackathon Unsubscribe Agent Route ----
+@app.route("/unsubscribe", methods=["POST"])
+def unsubscribe():
+    if 'google_id' not in session:
+        return {"status": "error", "message": "Not authorized"}, 401
+        
+    google_id = session['google_id']
+    sender = request.form.get("sender")
+    mailto_link = request.form.get("mailto_link")
+    http_link = request.form.get("http_link")
+    
+    if not sender:
+        return {"status": "error", "message": "Sender info missing"}, 400
+        
+    success = False
+    details = ""
+    if mailto_link:
+        success = send_unsubscribe_email(google_id, mailto_link)
+        details = "Unsubscribe email sent automatically."
+    elif http_link:
+        success = True
+        details = f"Unsubscribe link: {http_link}"
+        
+    if success:
+        add_unsubscribed_sender(sender)
+        live_activity_logs.insert(0, f"[Unsubscribe Agent] Auto-unsubscribed from '{sender}'")
+        return {"status": "success", "message": f"Successfully processed unsubscribe for {sender}. {details}"}
+    else:
+        return {"status": "error", "message": "Could not complete unsubscribe automatically."}
 
+# ---- Hackathon Plugin Management Route ----
+@app.route("/toggle_plugin", methods=["POST"])
+def toggle_plugin():
+    if 'google_id' not in session:
+        return {"status": "error", "message": "Not authorized"}, 401
+        
+    plugin_name = request.form.get("plugin_name")
+    enabled = request.form.get("enabled") == "1"
+    
+    if not plugin_name:
+        return {"status": "error", "message": "Plugin name missing"}, 400
+        
+    set_plugin_enabled(plugin_name, enabled)
+    status_str = "enabled" if enabled else "disabled"
+    live_activity_logs.insert(0, f"[Plugin Manager] Plugin '{plugin_name}' has been {status_str}.")
+    return {"status": "success", "message": f"Plugin '{plugin_name}' is now {status_str}."}
+
+# ---- OAuth routes ----
 @app.route("/authorize")
 def authorize():
-    """
-    Start the OAuth flow (no temporary extra server). We redirect the user to Google.
-    Google will send the user back to /oauth2callback on THIS SAME Flask server (port 5000).
-    """
     flow = Flow.from_client_config(
         get_google_client_config(),
         scopes=SCOPES,
         redirect_uri=REDIRECT_URI,
     )
-
-    # Force account chooser + request offline access (refresh token)
     authorization_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
@@ -272,15 +397,10 @@ def authorize():
     session["code_verifier"] = flow.code_verifier
     return redirect(authorization_url)
 
-
 @app.route("/oauth2callback")
 def oauth2callback():
-    """
-    Handle Google's redirect here, exchange code for tokens, then save credentials for reuse.
-    """
     state = session.get("state")
     if not state:
-        # if state is missing, restart auth flow cleanly
         return redirect(url_for("authorize"))
 
     flow = Flow.from_client_config(
@@ -291,7 +411,6 @@ def oauth2callback():
     )
     flow.code_verifier = session.get("code_verifier")
 
-    # Exchange the authorization code for tokens
     try:
         flow.fetch_token(authorization_response=request.url)
     except Exception as e:
@@ -302,8 +421,6 @@ def oauth2callback():
             raise e
 
     creds = flow.credentials
-    
-    # Fetch User Profile Info
     from googleapiclient.discovery import build
     service = build('oauth2', 'v2', credentials=creds)
     user_info = service.userinfo().get().execute()
@@ -313,27 +430,21 @@ def oauth2callback():
     name = user_info.get('name')
     picture = user_info.get('picture')
     
-    # Save to Session (Permanent)
     session.permanent = True
     session['google_id'] = google_id
     session['user_email'] = email
     session['user_name'] = name
     session['user_picture'] = picture
     
-    # Save to Database
     save_user(google_id, email, name, picture, creds.to_json())
-
     return redirect(url_for("dashboard"))
-
 
 @app.route("/logout")
 def logout():
-    # remove saved tokens so next login is fresh
     try:
         os.remove("token.json")
     except FileNotFoundError:
         pass
-    # if your gmail_utils uses token.pickle, clear that too
     try:
         os.remove("token.pickle")
     except FileNotFoundError:
@@ -341,7 +452,5 @@ def logout():
     session.clear()
     return redirect(url_for("dashboard"))
 
-
 if __name__ == "__main__":
-    # Keep Flask on port 5000, and DO NOT run any other server on this port
     app.run(host="127.0.0.1", port=5000, debug=True)

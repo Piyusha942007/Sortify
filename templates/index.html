@@ -158,7 +158,6 @@
         .urgency-Medium { background: #f59e0b; color: white; }
         .urgency-Low { background: #10b981; color: white; }
 
-        /* Existing styles ... */
         .confirm-overlay {
             position: fixed;
             inset: 0;
@@ -178,6 +177,15 @@
             width: 90%;
             max-width: 400px;
             text-align: center;
+        }
+        
+        .tab-panel {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -252,68 +260,58 @@
             </div>
         {% endif %}
 
-                <!-- Opportunity Spotlight -->
-                {% if opportunities %}
-                <section class="glass-panel spotlight-section" style="margin-bottom: 2rem; border-color: rgba(59, 130, 246, 0.5);">
-                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                        <div style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; box-shadow: 0 0 10px #3b82f6;"></div>
-                        <h2 style="font-size: 1.125rem; font-weight: 700; letter-spacing: -0.02em;">Opportunity Spotlight</h2>
+        <!-- Opportunity Spotlight -->
+        {% if opportunities %}
+        <section class="glass-panel spotlight-section" style="margin-bottom: 2rem; border-color: rgba(59, 130, 246, 0.5);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; box-shadow: 0 0 10px #3b82f6;"></div>
+                <h2 style="font-size: 1.125rem; font-weight: 700; letter-spacing: -0.02em;">Opportunity Spotlight</h2>
+            </div>
+            <div class="opportunities-grid">
+                {% for opp in opportunities %}
+                <div class="opportunity-card">
+                    <div class="opp-icon" style="background: var(--primary); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="sparkles" style="width: 20px; color: white;"></i>
                     </div>
-                    <div class="opportunities-grid">
-                        {% for opp in opportunities %}
-                        <div class="opportunity-card">
-                            <div class="opp-icon" style="background: var(--primary); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                                <i data-lucide="sparkles" style="width: 20px; color: white;"></i>
-                            </div>
-                            <div style="flex: 1;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
-                                    <h4 style="font-size: 0.9375rem; font-weight: 700;">{{ opp.summary }}</h4>
-                                    <span class="urgency-pill urgency-{{ opp.urgency }}">{{ opp.urgency }}</span>
-                                </div>
-                                <p style="font-size: 0.75rem; color: var(--text-muted);">{{ opp.sender }} — {{ opp.subject[:50] }}...</p>
-                            </div>
-                            <button class="btn btn-glass" onclick="createDraft('{{ opp.sender }}', '{{ opp.subject }}', '{{ opp.summary }}')" style="padding: 0.5rem 1rem; font-size: 0.75rem;">Draft Reply</button>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
+                            <h4 style="font-size: 0.9375rem; font-weight: 700;">{{ opp.summary }}</h4>
+                            <span class="urgency-pill urgency-{{ opp.urgency }}">{{ opp.urgency }}</span>
                         </div>
-                        {% endfor %}
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">{{ opp.sender }} — {{ opp.subject[:50] }}...</p>
                     </div>
-                </section>
-                {% endif %}
+                    <button class="btn btn-glass" onclick="createDraft('{{ opp.sender }}', '{{ opp.subject }}', '{{ opp.summary }}')" style="padding: 0.5rem 1rem; font-size: 0.75rem;">Draft Reply</button>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
         <div class="dashboard-grid">
             <aside class="sidebar">
                 <nav>
-                    <a href="#" class="nav-item active">
+                    <a href="javascript:void(0)" class="nav-item active" id="tab-overview" onclick="switchTab('overview')">
                         <i data-lucide="layout-dashboard"></i>
                         Overview
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="javascript:void(0)" class="nav-item" id="tab-rules" onclick="switchTab('rules')">
                         <i data-lucide="layers"></i>
                         Smart Rules
                     </a>
-                    <a href="#" class="nav-item">
-                        <i data-lucide="sparkles"></i>
-                        AI Insights
+                    <a href="javascript:void(0)" class="nav-item" id="tab-unsubscribe" onclick="switchTab('unsubscribe')">
+                        <i data-lucide="mail-minus"></i>
+                        Unsubscribe Agent
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="javascript:void(0)" class="nav-item" id="tab-cleanup" onclick="switchTab('cleanup')">
                         <i data-lucide="trash-2"></i>
-                        <form action="{{ url_for('cleanup') }}" method="POST" style="display: inline;">
-                            <button type="submit" style="background: none; border: none; color: inherit; cursor: pointer; font: inherit; padding: 0;">Cleanup Assistant</button>
-                        </form>
+                        Cleanup Assistant
                     </a>
                     <div style="margin-top: auto; padding-top: 2rem;">
-                        <a href="#" class="nav-item">
-                            <i data-lucide="user"></i>
-                            Profile
-                        </a>
                         <a href="{{ url_for('logout') }}" class="nav-item" style="color: #ef4444;">
                             <i data-lucide="log-out"></i>
                             Sign Out
                         </a>
                     </div>
-                    <a href="#" class="nav-item">
-                        <i data-lucide="settings"></i>
-                        Settings
-                    </a>
                 </nav>
 
                 <div style="margin-top: auto; padding-top: 2rem;">
@@ -326,149 +324,203 @@
             </aside>
 
             <main class="main-content">
-                <section class="stat-grid">
+                <section class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
                     <div class="stat-card">
-                        <div class="stat-label">Labels Created</div>
+                        <div class="stat-label">Active Rules</div>
                         <div class="stat-value">{{ rules|length }}</div>
-                        <div style="font-size: 0.75rem; color: #10b981;">+2 this week</div>
+                        <div style="font-size: 0.75rem; color: #10b981;">Custom domains</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Emails Sorted</div>
                         <div class="stat-value">{{ stats.total_sorted if stats.total_sorted else 0 }}</div>
-                        <div style="font-size: 0.75rem; color: #10b981;">Across all rules</div>
+                        <div style="font-size: 0.75rem; color: #10b981;">Automatically triaged</div>
+                    </div>
+                    <div class="stat-card" style="background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.2);">
+                        <div class="stat-label" style="color: var(--accent);">Time Saved</div>
+                        <div class="stat-value" style="color: #a5b4fc;">{{ stats.time_saved or 0 }} Mins</div>
+                        <div style="font-size: 0.75rem; color: #a5b4fc;">Sortify automation</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Inbox Health</div>
-                        <div class="stat-value">{{ stats.health if stats.health else 'Unknown' }}</div>
-                        <div style="font-size: 0.75rem; color: #f59e0b;">{{ stats.composition.Promotions if stats.composition else 0 }} Promos pending</div>
+                        <div class="stat-label">AI Reply Drafts</div>
+                        <div class="stat-value">{{ stats.replies_drafted or 0 }}</div>
+                        <div style="font-size: 0.75rem; color: #10b981;">Templated responses</div>
                     </div>
                 </section>
 
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
-                    <section class="glass-panel">
-                        <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                            <i data-lucide="plus-circle" style="color: var(--primary);"></i>
-                            Create Smart Rule
-                        </h3>
-                        <p style="color: var(--text-muted); font-size: 0.875rem;">Enter a label name and the domain you want to automatically categorize.</p>
-                        
-                        <form id="addRuleForm" onsubmit="handleAdd(event)" style="margin-bottom: 2rem;">
-                            <div class="input-group" style="margin-bottom: 1rem;">
-                                <input type="text" name="label" placeholder="Label Name (e.g. Shopping)" required>
-                                <input type="text" name="domain" placeholder="Domain (e.g. amazon.com)" required>
-                            </div>
-                            <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" id="enableAutoReply" onchange="toggleAutoReplyInput(this)" style="flex: 0; width: auto; margin-right: 0.5rem; cursor: pointer;">
-                                <label for="enableAutoReply" style="font-size: 0.875rem; color: var(--text-muted); cursor: pointer; user-select: none;">Enable AI Auto-Reply Drafts for this rule</label>
-                            </div>
-                            <div id="autoReplyContainer" style="display: none; margin-bottom: 1rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-glass);">
-                                <label style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.5rem; display: block;">Reply Template / Instruction Prompt</label>
-                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
-                                    <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Polite Rejection')">Polite Rejection</button>
-                                    <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Acceptance/Meeting')">Accept/Meeting</button>
-                                    <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Standard Acknowledgment')">Acknowledge</button>
+                <!-- 1. OVERVIEW PANEL -->
+                <div id="tab-panel-overview" class="tab-panel" style="display: block;">
+                    <div style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 2rem;">
+                        <div style="display: flex; flex-direction: column; gap: 2rem;">
+                            <!-- Live Action Log Feed -->
+                            <section class="glass-panel">
+                                <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                    <i data-lucide="terminal" style="color: var(--primary);"></i>
+                                    Live Action Log
+                                </h3>
+                                <div style="background: rgba(0,0,0,0.25); border-radius: 12px; padding: 1.25rem; font-family: monospace; font-size: 0.8125rem; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass);" id="liveLogsContainer">
+                                    {% for log in live_logs %}
+                                        <div style="margin-bottom: 0.5rem; color: #10b981; line-height: 1.4;">
+                                            <span style="color: var(--text-muted);">&gt;</span> {{ log }}
+                                        </div>
+                                    {% endfor %}
                                 </div>
-                                <input type="text" id="replyTemplateInput" name="reply_template" placeholder="e.g. Write a polite rejection stating that we are currently fully staffed." style="width: 100%;">
-                            </div>
-                            <button type="submit" class="btn btn-primary" id="addBtn" style="width: 100%;">Add Rule</button>
-                        </form>
+                            </section>
 
-                        <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; border-top: 1px solid var(--border-glass); pt: 2rem; margin-top: 2rem; padding-top: 2rem;">
-                            <i data-lucide="sparkles" style="color: var(--accent);"></i>
-                            AI Natural Language Rule
-                        </h3>
-                        <p style="color: var(--text-muted); font-size: 0.875rem;">Type what you want to organize in plain English.</p>
-                        <form action="{{ url_for('ai_rule') }}" method="POST">
-                            <div class="input-group">
-                                <input type="text" name="prompt" placeholder="e.g. Move all my food delivery emails to a 'Food' folder" required>
-                                <button type="submit" class="btn btn-glass" style="border-color: var(--accent);">Generate & Apply</button>
-                            </div>
-                        </form>
+                            <!-- Plugin Extension Manager -->
+                            <section class="glass-panel">
+                                <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                    <i data-lucide="cpu" style="color: var(--accent);"></i>
+                                    Plugin Extensions
+                                </h3>
+                                {% if plugins %}
+                                    {% for plugin in plugins %}
+                                        <div style="padding: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 16px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;">
+                                            <div style="flex: 1; margin-right: 1.5rem;">
+                                                <h4 style="font-size: 0.9375rem; font-weight: 700;">{{ plugin.name }}</h4>
+                                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">{{ plugin.description }}</p>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" id="plugin-toggle-{{ plugin.id }}" {% if plugin.enabled == 1 %}checked{% endif %} onchange="togglePlugin('{{ plugin.name }}', this)" style="cursor: pointer; scale: 1.2; width: auto;">
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p style="font-size: 0.8125rem; color: var(--text-muted);">No extensions installed.</p>
+                                {% endif %}
+                            </section>
+                        </div>
 
-                        <div class="rules-list" id="rulesList">
-                            <h4 style="margin: 2rem 0 1rem; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Active Rules</h4>
-                            {% if rules %}
-                                {% for rule in rules if '/' not in rule.label %}
-                                    <div class="rule-item" id="rule-{{ rule.id }}" data-label="{{ rule.label.lower() }}" style="flex-direction: column; align-items: stretch; padding: 1.5rem;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                            <div class="rule-info" style="flex: 1; margin-right: 1rem;">
-                                                <h4 class="rule-label-display" style="display: flex; align-items: center; gap: 0.5rem;">
-                                                    {{ rule.label }}
+                        <!-- Inbox Composition Graph -->
+                        <section class="glass-panel">
+                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                <i data-lucide="pie-chart" style="color: var(--accent);"></i>
+                                Inbox Composition
+                            </h3>
+                            <canvas id="compositionChart" height="250"></canvas>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- 2. SMART RULES PANEL -->
+                <div id="tab-panel-rules" class="tab-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+                        <section class="glass-panel">
+                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                <i data-lucide="plus-circle" style="color: var(--primary);"></i>
+                                Create Smart Rule
+                            </h3>
+                            <p style="color: var(--text-muted); font-size: 0.875rem;">Enter a label name and the domain you want to automatically categorize.</p>
+                            
+                            <form id="addRuleForm" onsubmit="handleAdd(event)" style="margin-bottom: 2rem;">
+                                <div class="input-group" style="margin-bottom: 1rem;">
+                                    <input type="text" name="label" placeholder="Label Name (e.g. Shopping)" required>
+                                    <input type="text" name="domain" placeholder="Domain (e.g. amazon.com)" required>
+                                </div>
+                                <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" id="enableAutoReply" onchange="toggleAutoReplyInput(this)" style="flex: 0; width: auto; margin-right: 0.5rem; cursor: pointer;">
+                                    <label for="enableAutoReply" style="font-size: 0.875rem; color: var(--text-muted); cursor: pointer; user-select: none;">Enable AI Auto-Reply Drafts for this rule</label>
+                                </div>
+                                <div id="autoReplyContainer" style="display: none; margin-bottom: 1rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-glass);">
+                                    <label style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.5rem; display: block;">Reply Template / Instruction Prompt</label>
+                                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                        <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Polite Rejection')">Polite Rejection</button>
+                                        <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Acceptance/Meeting')">Accept/Meeting</button>
+                                        <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Standard Acknowledgment')">Acknowledge</button>
+                                    </div>
+                                    <input type="text" id="replyTemplateInput" name="reply_template" placeholder="e.g. Write a polite rejection stating that we are currently fully staffed." style="width: 100%;">
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="addBtn" style="width: 100%;">Add Rule</button>
+                            </form>
+    
+                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; border-top: 1px solid var(--border-glass); pt: 2rem; margin-top: 2rem; padding-top: 2rem;">
+                                <i data-lucide="sparkles" style="color: var(--accent);"></i>
+                                AI Natural Language Rule
+                            </h3>
+                            <p style="color: var(--text-muted); font-size: 0.875rem;">Type what you want to organize in plain English.</p>
+                            <form action="{{ url_for('ai_rule') }}" method="POST">
+                                <div class="input-group">
+                                    <input type="text" name="prompt" placeholder="e.g. Move all my food delivery emails to a 'Food' folder" required>
+                                    <button type="submit" class="btn btn-glass" style="border-color: var(--accent);">Generate & Apply</button>
+                                </div>
+                            </form>
+    
+                            <div class="rules-list" id="rulesList">
+                                <h4 style="margin: 2rem 0 1rem; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Active Rules</h4>
+                                {% if rules %}
+                                    {% for rule in rules if '/' not in rule.label %}
+                                        <div class="rule-item" id="rule-{{ rule.id }}" data-label="{{ rule.label.lower() }}" style="flex-direction: column; align-items: stretch; padding: 1.5rem;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                                <div class="rule-info" style="flex: 1; margin-right: 1rem;">
+                                                    <h4 class="rule-label-display" style="display: flex; align-items: center; gap: 0.5rem;">
+                                                        {{ rule.label }}
+                                                        {% if rule.reply_template %}
+                                                            <span class="urgency-pill urgency-Low" style="font-size: 0.65rem; background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent); color: var(--text-main); font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                                                <i data-lucide="bot" style="width: 12px; height: 12px;"></i> AI Auto-Reply
+                                                            </span>
+                                                        {% endif %}
+                                                    </h4>
+                                                    <p>from:{{ rule.domain }}</p>
                                                     {% if rule.reply_template %}
-                                                        <span class="urgency-pill urgency-Low" style="font-size: 0.65rem; background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent); color: var(--text-main); font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                                            <i data-lucide="bot" style="width: 12px; height: 12px;"></i> AI Auto-Reply
-                                                        </span>
+                                                        <p style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem; font-style: italic;">
+                                                            "{{ rule.reply_template }}"
+                                                        </p>
                                                     {% endif %}
-                                                </h4>
-                                                <p>from:{{ rule.domain }}</p>
-                                                {% if rule.reply_template %}
-                                                    <p style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem; font-style: italic;">
-                                                        "{{ rule.reply_template }}"
-                                                    </p>
-                                                {% endif %}
-                                                
-                                                <div class="edit-mode" style="display: none; margin-top: 0.5rem;">
-                                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                                        <input type="text" class="edit-input" value="{{ rule.label }}" style="padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; width: 100%;">
-                                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                                                            <input type="checkbox" class="edit-enable-reply" id="edit-enable-reply-{{ rule.id }}" {% if rule.reply_template %}checked{% endif %} onchange="toggleEditReplyInput({{ rule.id }})" style="width: auto; cursor: pointer;">
-                                                            <label for="edit-enable-reply-{{ rule.id }}" style="font-size: 0.75rem; color: var(--text-muted); cursor: pointer;">Enable AI Auto-Reply</label>
-                                                        </div>
-                                                        <input type="text" class="edit-reply-template" id="edit-reply-template-{{ rule.id }}" value="{{ rule.reply_template or '' }}" placeholder="AI Reply Prompt (e.g. Reply politely)" style="padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; width: 100%; {% if not rule.reply_template %}display: none;{% endif %}">
-                                                        <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-                                                            <button onclick="saveEdit({{ rule.id }})" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Save</button>
-                                                            <button onclick="toggleEdit({{ rule.id }})" class="btn btn-glass" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Cancel</button>
+                                                    
+                                                    <div class="edit-mode" style="display: none; margin-top: 0.5rem;">
+                                                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                                            <input type="text" class="edit-input" value="{{ rule.label }}" style="padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; width: 100%;">
+                                                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                                                                <input type="checkbox" class="edit-enable-reply" id="edit-enable-reply-{{ rule.id }}" {% if rule.reply_template %}checked{% endif %} onchange="toggleEditReplyInput({{ rule.id }})" style="width: auto; cursor: pointer;">
+                                                                <label for="edit-enable-reply-{{ rule.id }}" style="font-size: 0.75rem; color: var(--text-muted); cursor: pointer;">Enable AI Auto-Reply</label>
+                                                            </div>
+                                                            <input type="text" class="edit-reply-template" id="edit-reply-template-{{ rule.id }}" value="{{ rule.reply_template or '' }}" placeholder="AI Reply Prompt (e.g. Reply politely)" style="padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; width: 100%; {% if not rule.reply_template %}display: none;{% endif %}">
+                                                            <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                                                                <button onclick="saveEdit({{ rule.id }})" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Save</button>
+                                                                <button onclick="toggleEdit({{ rule.id }})" class="btn btn-glass" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Cancel</button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="rule-actions" style="display: flex; gap: 0.5rem;">
+                                                    <button onclick="toggleEdit({{ rule.id }})" class="btn-icon-premium" title="Edit Name"><i data-lucide="edit-3" style="width: 16px;"></i></button>
+                                                    <button onclick="confirmDelete({{ rule.id }})" class="btn-icon-premium delete" title="Delete Rule">
+                                                        <i data-lucide="trash-2" style="width: 16px;"></i>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div class="rule-actions" style="display: flex; gap: 0.5rem;">
-                                                <button onclick="toggleEdit({{ rule.id }})" class="btn-icon-premium" title="Edit Name"><i data-lucide="edit-3" style="width: 16px;"></i></button>
-                                                <button onclick="confirmDelete({{ rule.id }})" class="btn-icon-premium delete" title="Delete Rule">
-                                                    <i data-lucide="trash-2" style="width: 16px;"></i>
-                                                </button>
+    
+                                            <!-- Sub-labels Section -->
+                                            <div class="sublabel-section">
+                                                <div id="sublabels-{{ rule.id }}">
+                                                    {% for sub in rules if sub.label.startswith(rule.label + '/') %}
+                                                        <div class="sublabel-item">
+                                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                                <i data-lucide="corner-down-right" style="width: 14px; color: var(--text-muted);"></i>
+                                                                <span>{{ sub.label.split('/')[-1] }}</span>
+                                                                <span style="font-size: 0.7rem; color: var(--text-muted);">({{ sub.domain }})</span>
+                                                            </div>
+                                                            <div style="display: flex; gap: 0.5rem;">
+                                                                <button onclick="confirmDelete({{ sub.id }})" class="btn-icon" style="padding: 2px;">
+                                                                    <i data-lucide="trash-2" style="width: 14px; color: #ef4444;"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                                <div class="add-sublabel-btn" onclick="openSublabelModal('{{ rule.label }}')">
+                                                    <i data-lucide="plus-circle" style="width: 14px;"></i>
+                                                    Add Sub-label
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <!-- Sub-labels Section -->
-                                        <div class="sublabel-section">
-                                            <div id="sublabels-{{ rule.id }}">
-                                                {% for sub in rules if sub.label.startswith(rule.label + '/') %}
-                                                    <div class="sublabel-item">
-                                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                            <i data-lucide="corner-down-right" style="width: 14px; color: var(--text-muted);"></i>
-                                                            <span>{{ sub.label.split('/')[-1] }}</span>
-                                                            <span style="font-size: 0.7rem; color: var(--text-muted);">({{ sub.domain }})</span>
-                                                        </div>
-                                                        <div style="display: flex; gap: 0.5rem;">
-                                                            <button onclick="confirmDelete({{ sub.id }})" class="btn-icon" style="padding: 2px;">
-                                                                <i data-lucide="trash-2" style="width: 14px; color: #ef4444;"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                {% endfor %}
-                                            </div>
-                                            <div class="add-sublabel-btn" onclick="openSublabelModal('{{ rule.label }}')">
-                                                <i data-lucide="plus-circle" style="width: 14px;"></i>
-                                                Add Sub-label
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <div id="noRules" style="text-align: center; padding: 2rem; color: var(--text-muted); border: 1px dashed var(--border-glass); border-radius: 12px;">No active rules yet. Create your first one above!</div>
-                            {% endif %}
-                        </div>
-                    </section>
-
-                    <section class="glass-panel">
-                        <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                            <i data-lucide="pie-chart" style="color: var(--accent);"></i>
-                            Inbox Composition
-                        </h3>
-                        <canvas id="compositionChart" height="250"></canvas>
+                                    {% endfor %}
+                                {% else %}
+                                    <div id="noRules" style="text-align: center; padding: 2rem; color: var(--text-muted); border: 1px dashed var(--border-glass); border-radius: 12px;">No active rules yet. Create your first one above!</div>
+                                {% endif %}
+                            </div>
+                        </section>
                         
-                        <div style="margin-top: 2rem;">
+                        <section class="glass-panel">
                             <h4 style="font-size: 0.875rem; margin-bottom: 1rem;">AI Suggestions</h4>
                             {% if suggestions %}
                                 {% for suggestion in suggestions %}
@@ -484,7 +536,89 @@
                             {% else %}
                                 <p style="font-size: 0.8125rem; color: var(--text-muted);">No suggestions yet. Connect Gmail to see AI insights.</p>
                             {% endif %}
-                        </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- 3. UNSUBSCRIBE AGENT PANEL -->
+                <div id="tab-panel-unsubscribe" class="tab-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+                        <section class="glass-panel">
+                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                <i data-lucide="mail-minus" style="color: var(--primary);"></i>
+                                Unsubscribe Agent
+                            </h3>
+                            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">
+                                Scan newsletters in your inbox, extract list preferences, and unsubscribe in one click.
+                            </p>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 1rem;" id="newsletterList">
+                                {% if newsletters %}
+                                    {% for item in newsletters %}
+                                        <div style="padding: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 16px; display: flex; justify-content: space-between; align-items: center;" id="news-{{ item.id }}">
+                                            <div style="flex: 1; margin-right: 1.5rem;">
+                                                <h4 style="font-size: 0.9375rem; font-weight: 700;">{{ item.sender }}</h4>
+                                                <p style="font-size: 0.8125rem; color: var(--text-muted);">{{ item.subject }}</p>
+                                                <p style="font-size: 0.6875rem; color: var(--primary); margin-top: 0.25rem;">{{ item.date }}</p>
+                                            </div>
+                                            <div style="display: flex; gap: 0.5rem;">
+                                                {% if item.mailto_link %}
+                                                    <button class="btn btn-primary" onclick="unsubscribeSender('{{ item.id }}', '{{ item.sender_email }}', '{{ item.mailto_link }}', '')" style="padding: 0.5rem 1rem; font-size: 0.75rem;">
+                                                        One-Click Unsubscribe
+                                                    </button>
+                                                {% elif item.http_link %}
+                                                    <a href="{{ item.http_link }}" target="_blank" class="btn btn-glass" onclick="logUnsubscribe('{{ item.sender_email }}')" style="padding: 0.5rem 1rem; font-size: 0.75rem; text-decoration: none;">
+                                                        Go to Unsubscribe
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div style="text-align: center; padding: 2rem; color: var(--text-muted); border: 1px dashed var(--border-glass); border-radius: 12px;">
+                                        No active newsletters found with unsubscribe headers in recent emails.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </section>
+                        
+                        <section class="glass-panel">
+                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                <i data-lucide="archive" style="color: var(--accent);"></i>
+                                Unsubscribed Senders
+                            </h3>
+                            <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 1rem;">Senders you have unsubscribed from via Sortify:</p>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                {% if unsubscribed %}
+                                    {% for entry in unsubscribed %}
+                                        <div style="padding: 0.75rem 1rem; background: rgba(255,255,255,0.01); border: 1px solid var(--border-glass); border-radius: 8px; font-size: 0.8125rem; display: flex; justify-content: space-between;">
+                                            <span style="font-weight: 500;">{{ entry.sender }}</span>
+                                            <span style="color: var(--text-muted); font-size: 0.7rem;">{{ entry.date_unsubscribed }}</span>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No senders unsubscribed yet.</p>
+                                {% endif %}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- 4. CLEANUP ASSISTANT PANEL -->
+                <div id="tab-panel-cleanup" class="tab-panel" style="display: none;">
+                    <section class="glass-panel">
+                        <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                            <i data-lucide="trash-2" style="color: #ef4444;"></i>
+                            Cleanup Assistant
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">
+                            Archive promotional emails older than 30 days automatically to clean up space in your primary inbox.
+                        </p>
+                        <form action="{{ url_for('cleanup') }}" method="POST">
+                            <button type="submit" class="btn btn-primary" style="background: #ef4444; box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);">
+                                Archive Old Promotions Now
+                            </button>
+                        </form>
                     </section>
                 </div>
             </main>
@@ -536,6 +670,18 @@
                 cutout: '70%'
             }
         });
+
+        // Tab Switcher logic
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            
+            const panel = document.getElementById(`tab-panel-${tab}`);
+            if (panel) panel.style.display = 'block';
+            
+            const navBtn = document.getElementById(`tab-${tab}`);
+            if (navBtn) navBtn.classList.add('active');
+        }
 
         // GSAP entry animations
         gsap.from(".sidebar", { x: -50, opacity: 0, duration: 0.8, ease: "power3.out" });
@@ -602,7 +748,6 @@
             
             if (!newLabel) return showToast("Label cannot be empty", "error");
 
-            // Duplicate Check
             const existing = Array.from(document.querySelectorAll('.rule-item'))
                 .filter(item => item.id !== `rule-${id}`)
                 .some(item => item.dataset.label === newLabel.toLowerCase());
@@ -682,7 +827,7 @@
                         onComplete: () => {
                             document.getElementById(`rule-${id}`).remove();
                             if (document.querySelectorAll('.rule-item').length === 0) {
-                                location.reload(); // Show 'No Rules' state
+                                location.reload();
                             }
                         }
                     });
@@ -703,7 +848,6 @@
             const replyTemplate = enableAutoReply ? document.getElementById('replyTemplateInput').value.trim() : "";
             const btn = document.getElementById('addBtn');
 
-            // Duplicate Check
             const existing = Array.from(document.querySelectorAll('.rule-item'))
                 .some(item => item.dataset.label === label.toLowerCase());
             
@@ -727,7 +871,7 @@
                 
                 if (data.status === 'success') {
                     showToast("Rule created and synced!");
-                    setTimeout(() => location.reload(), 1000); // Reload to get new ID and sync stats
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     showToast(data.message, 'error');
                     btn.disabled = false;
@@ -763,6 +907,7 @@
                 showToast("Failed to connect to AI", "error");
             }
         }
+
         async function syncInbox() {
             try {
                 const response = await fetch('/sync', { method: 'POST' });
@@ -776,6 +921,7 @@
         // Sync on load and then every 60s
         syncInbox();
         setInterval(syncInbox, 60000);
+
         function openSublabelModal(parentLabel) {
             document.getElementById('parentLabelInput').value = parentLabel;
             document.getElementById('sublabelModalTitle').innerText = `Add Sub-labels to ${parentLabel}`;
@@ -830,6 +976,73 @@
                 setTimeout(() => location.reload(), 1000);
             } catch (e) {
                 showToast("Failed to create sub-labels", "error");
+            }
+        }
+
+        // Hackathon Unsubscribe Agent actions
+        async function unsubscribeSender(id, sender, mailtoLink, httpLink) {
+            showToast("Processing unsubscribe...", "info");
+            try {
+                const formData = new FormData();
+                formData.append('sender', sender);
+                if (mailtoLink) formData.append('mailto_link', mailtoLink);
+                if (httpLink) formData.append('http_link', httpLink);
+                
+                const response = await fetch('/unsubscribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showToast(data.message);
+                    const card = document.getElementById(`news-${id}`);
+                    if (card) {
+                        gsap.to(card, {
+                            scale: 0.8,
+                            opacity: 0,
+                            duration: 0.3,
+                            onComplete: () => {
+                                card.remove();
+                                if (document.querySelectorAll('#newsletterList > div').length === 0) {
+                                    location.reload();
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (e) {
+                showToast("Unsubscribe request failed", "error");
+            }
+        }
+
+        async function logUnsubscribe(sender) {
+            try {
+                const formData = new FormData();
+                formData.append('sender', sender);
+                await fetch('/unsubscribe', { method: 'POST', body: formData });
+            } catch(e) {}
+        }
+
+        // Hackathon Plugin Extensions toggler
+        async function togglePlugin(name, checkbox) {
+            showToast(`Updating plugin status: ${name}...`, "info");
+            try {
+                const formData = new FormData();
+                formData.append('plugin_name', name);
+                formData.append('enabled', checkbox.checked ? '1' : '0');
+                
+                const response = await fetch('/toggle_plugin', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                showToast(data.message);
+            } catch (e) {
+                showToast("Failed to update plugin status", "error");
+                checkbox.checked = !checkbox.checked;
             }
         }
     </script>

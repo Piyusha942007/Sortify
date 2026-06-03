@@ -54,6 +54,25 @@ def init_db():
             rule_id INTEGER
         )
     """)
+    # Create plugins table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS plugins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE,
+            enabled INTEGER
+        )
+    """)
+    cursor.execute("INSERT OR IGNORE INTO plugins (name, enabled) VALUES ('Phishing Detector', 1)")
+
+    # Create unsubscribed_senders table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS unsubscribed_senders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT UNIQUE,
+            date_unsubscribed TEXT
+        )
+    """)
+
     # Check if reply_template column exists in rules
     cursor.execute("PRAGMA table_info(rules)")
     columns = [col[1] for col in cursor.fetchall()]
@@ -208,3 +227,55 @@ def mark_email_processed(message_id, google_id, rule_id):
         print(f"Error marking email processed: {e}")
     finally:
         conn.close()
+
+def get_plugins():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM plugins")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+def set_plugin_enabled(name, enabled):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE plugins SET enabled = ? WHERE name = ?", (1 if enabled else 0, name))
+    conn.commit()
+    conn.close()
+
+def is_plugin_enabled(name):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT enabled FROM plugins WHERE name = ?", (name,))
+    row = cursor.fetchone()
+    conn.close()
+    return row["enabled"] == 1 if row else False
+
+def add_unsubscribed_sender(sender):
+    import datetime
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT OR IGNORE INTO unsubscribed_senders (sender, date_unsubscribed) VALUES (?, ?)", 
+                       (sender, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+    except Exception as e:
+        print(f"Error adding unsubscribed sender: {e}")
+    finally:
+        conn.close()
+
+def get_unsubscribed_senders():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM unsubscribed_senders")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+def get_processed_emails_count(google_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM processed_emails WHERE google_id = ?", (google_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else 0

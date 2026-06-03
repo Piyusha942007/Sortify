@@ -1,17 +1,18 @@
 import os
 import json
 import base64
+import re
 from email.message import EmailMessage
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-from database import get_user_credentials_json, update_user_credentials
 
 # --------------------
 # CREDENTIAL HANDLING
 # --------------------
 
 def get_user_credentials(google_id):
+    from services.db_service import get_user_credentials_json, update_user_credentials
     creds_json_str = get_user_credentials_json(google_id)
     if not creds_json_str:
         return None
@@ -25,7 +26,6 @@ def get_user_credentials(google_id):
     
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
-        # Update Supabase with new tokens
         update_user_credentials(google_id, creds.to_json())
         
     return creds
@@ -45,7 +45,6 @@ def ensure_label_exists(service, label_name):
     for l in labels:
         if l["name"].lower() == label_name.lower():
             return l["id"]
-    # if not found, create
     label = service.users().labels().create(
         userId="me", body={"name": label_name, "labelListVisibility": "labelShow", "messageListVisibility": "show"}
     ).execute()
@@ -120,8 +119,8 @@ def apply_single_rule(rule, google_id):
     reply_template = rule.get("reply_template")
     rule_id = rule.get("id")
     if reply_template and rule_id:
-        from database import is_email_processed, mark_email_processed
-        from ai_utils import generate_reply_draft
+        from services.db_service import is_email_processed, mark_email_processed
+        from services.gemini_service import generate_reply_draft
         
         print(f"DEBUG: Processing AI auto-reply drafts for rule {rule_id} using template: {reply_template[:30]}...")
         for msg in messages:
@@ -129,7 +128,6 @@ def apply_single_rule(rule, google_id):
             if not is_email_processed(msg_id):
                 details = get_email_details(service, msg_id)
                 if details:
-                    # Construct prompt for templated reply
                     prompt = (
                         f"Reply Prompt Instruction Guideline: {reply_template}\n\n"
                         f"Sender: {details['sender']}\n"
@@ -157,7 +155,7 @@ def apply_single_rule(rule, google_id):
     return f"Applied rule {rule['label']} → {rule['domain']} to {len(messages)} emails"
 
 def apply_all_rules(google_id):
-    from database import get_user_rules
+    from services.db_service import get_user_rules
     rules = get_user_rules(google_id)
     results = []
     for rule in rules:
@@ -242,3 +240,115 @@ def archive_old_promotions(google_id):
     ids = [msg["id"] for msg in messages]
     service.users().messages().batchModify(userId="me", body={"ids": ids, "removeLabelIds": ["INBOX"]}).execute()
     return f"Archived {len(messages)} emails"
+
+# --------------------
+# UNSUBSCRIBE ACTIONS
+# --------------------
+
+def parse_list_unsubscribe(header_value):
+    mailto_link = None
+    http_link = None
+    if not header_value:
+        return mailto_link, http_link
+        
+    parts = re.findall(r'<(.*?)>', header_value)
+    for part in parts:
+        if part.startswith('mailto:'):
+            mailto_link = part
+        elif part.startswith('http'):
+            http_link = part
+            
+    return mailto_link, http_link
+
+def get_newsletters(google_id):
+    service = get_gmail_service(google_id)
+    if not service: return []
+    
+    try:
+        # Fetch recent promotional/updates messages to scan for unsubscribe links
+        query = "category:promotions OR category:updates"
+        results = service.users().messages().list(userId="me", q=query, maxResults=15).execute()
+        messages = results.get("messages", [])
+        
+        newsletters = []
+        from services.db_service import get_unsubscribed_senders
+        unsubscribed = {u["sender"].lower() for u in get_unsubscribed_senders()}
+        
+        for msg in messages:
+            m = service.users().messages().get(userId="me", id=msg["id"], format="metadata", 
+                                                metadataHeaders=["Subject", "From", "Date", "List-Unsubscribe"]).execute()
+            headers = m.get("payload", {}).get("headers", [])
+            
+            subject = next((h["value"] for h in headers if h["name"].lower() == "subject"), "No Subject")
+            sender_full = next((h["value"] for h in headers if h["name"].lower() == "from"), "Unknown")
+            date = next((h["value"] for h in headers if h["name"].lower() == "date"), "")
+            list_unsub = next((h["value"] for h in headers if h["name"].lower() == "list-unsubscribe"), None)
+            
+            sender_email = sender_full
+            if "<" in sender_full:
+                sender_email = sender_full.split("<")[1].split(">")[0].strip()
+                
+            if sender_email.lower() in unsubscribed:
+                continue
+                
+            mailto_link, http_link = None, None
+            if list_unsub:
+                mailto_link, http_link = parse_list_unsubscribe(list_unsub)
+                
+            # If both links are missing, use Gemini body scanner as fallback
+            if not mailto_link and not http_link:
+                from services.gemini_service import find_unsubscribe_link_in_body
+                body_details = get_email_details(service, msg["id"])
+                if body_details and body_details.get("body"):
+                    http_link = find_unsubscribe_link_in_body(body_details["body"])
+                    
+            if mailto_link or http_link:
+                newsletters.append({
+                    "id": msg["id"],
+                    "sender": sender_full,
+                    "sender_email": sender_email,
+                    "subject": subject,
+                    "date": date,
+                    "mailto_link": mailto_link,
+                    "http_link": http_link
+                })
+                
+        return newsletters
+    except Exception as e:
+        print(f"Error fetching newsletters: {e}")
+        return []
+
+def send_unsubscribe_email(google_id, mailto_uri):
+    service = get_gmail_service(google_id)
+    if not service: return False
+    
+    try:
+        parsed = mailto_uri.replace("mailto:", "")
+        to_email = parsed
+        subject = "Unsubscribe"
+        body = "Unsubscribe me from this list please."
+        
+        if "?" in parsed:
+            parts = parsed.split("?")
+            to_email = parts[0]
+            query = parts[1]
+            for q in query.split("&"):
+                if q.startswith("subject="):
+                    import urllib.parse
+                    subject = urllib.parse.unquote(q.split("=")[1])
+                elif q.startswith("body="):
+                    import urllib.parse
+                    body = urllib.parse.unquote(q.split("=")[1])
+                    
+        message = EmailMessage()
+        message.set_content(body)
+        message['To'] = to_email
+        message['Subject'] = subject
+        
+        encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        create_message = {'raw': encoded_message}
+        service.users().messages().send(userId='me', body=create_message).execute()
+        return True
+    except Exception as e:
+        print(f"Error sending unsubscribe email: {e}")
+        return False
