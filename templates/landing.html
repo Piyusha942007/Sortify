@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
   <title>Sortify AI — Your Inbox. Finally Under Control.</title>
   
   <!-- Fonts -->
@@ -153,11 +154,11 @@
       width: 100%;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 80px 24px 100px;
+      padding: 100px 24px 120px;
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-columns: 1.25fr 0.75fr;
       align-items: center;
-      gap: 48px;
+      gap: 56px;
       z-index: 2;
     }
 
@@ -165,7 +166,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 28px;
+      gap: 32px;
     }
 
     .pill-badge {
@@ -191,10 +192,10 @@
     }
 
     h1 {
-      font-size: 58px;
+      font-size: 76px;
       font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: -2px;
+      line-height: 1.05;
+      letter-spacing: -3px;
       color: var(--text-primary);
     }
 
@@ -205,11 +206,11 @@
     }
 
     .subheadline {
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 300;
       color: var(--text-secondary);
-      line-height: 1.55;
-      max-width: 540px;
+      line-height: 1.6;
+      max-width: 640px;
     }
 
     .ctas-container {
@@ -222,13 +223,13 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%);
       color: #ffffff;
-      padding: 14px 28px;
+      padding: 18px 44px;
       border-radius: var(--radius-lg);
       font-family: var(--font-sans);
-      font-size: 15px;
+      font-size: 18px;
       font-weight: 600;
       text-decoration: none;
       cursor: pointer;
@@ -260,13 +261,13 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
       background: rgba(255, 255, 255, 0.02);
       color: var(--text-primary);
-      padding: 13px 26px;
+      padding: 17px 42px;
       border-radius: var(--radius-lg);
       font-family: var(--font-sans);
-      font-size: 15px;
+      font-size: 18px;
       font-weight: 500;
       text-decoration: none;
       cursor: pointer;
@@ -292,6 +293,8 @@
 
     .btn-primary svg, .btn-ghost svg {
       flex-shrink: 0;
+      width: 18px !important;
+      height: 18px !important;
     }
 
     .meta-note {
@@ -299,7 +302,7 @@
       font-size: 11px;
       color: var(--text-secondary);
       opacity: 0.6;
-      margin-top: -12px;
+      margin-top: -4px;
     }
 
     /* Core Visualizer Container */
@@ -342,24 +345,25 @@
       width: 100%;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 80px 24px;
+      padding: 100px 24px;
       position: relative;
       z-index: 2;
     }
 
     .section-header {
       text-align: center;
-      max-width: 680px;
-      margin: 0 auto 52px;
+      max-width: 800px;
+      margin: 0 auto 64px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
     }
 
     .section-header h2 {
-      font-size: 36px;
+      font-size: 48px;
       font-weight: 600;
-      letter-spacing: -1.5px;
+      letter-spacing: -2px;
+      line-height: 1.15;
     }
 
     .section-header h2 span {
@@ -368,15 +372,15 @@
 
     .section-header p {
       color: var(--text-secondary);
-      font-size: 15px;
-      line-height: 1.5;
+      font-size: 18px;
+      line-height: 1.6;
     }
 
     /* How it works visualizer card grid */
     .stepper-grid {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
       position: relative;
     }
 
@@ -384,12 +388,12 @@
       background: rgba(17, 17, 24, 0.45);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: 20px 16px;
+      padding: 28px 24px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
       backdrop-filter: blur(10px);
       transition: all 0.3s;
     }
@@ -402,16 +406,16 @@
 
     .step-num {
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 12px;
       color: var(--accent);
       background: rgba(99, 102, 241, 0.1);
-      padding: 3px 8px;
-      border-radius: 10px;
+      padding: 4px 10px;
+      border-radius: 12px;
     }
 
     .step-icon {
-      width: 36px;
-      height: 36px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.02);
       display: flex;
@@ -421,6 +425,11 @@
       transition: all 0.3s;
     }
 
+    .step-icon svg, .step-icon i {
+      width: 20px !important;
+      height: 20px !important;
+    }
+
     .step-card:hover .step-icon {
       color: var(--accent);
       background: rgba(99, 102, 241, 0.1);
@@ -428,32 +437,32 @@
     }
 
     .step-title {
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 16px;
+      font-weight: 600;
       color: var(--text-primary);
     }
 
     .step-desc {
-      font-size: 11px;
+      font-size: 13.5px;
       color: var(--text-secondary);
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     /* Comparison block */
     .compare-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 28px;
+      gap: 36px;
     }
 
     .compare-card {
       background: rgba(17, 17, 24, 0.65);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-xl);
-      padding: 32px;
+      padding: 40px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 28px;
       backdrop-filter: blur(12px);
     }
 
@@ -468,20 +477,20 @@
     }
 
     .compare-title {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .compare-badge {
       font-family: var(--font-mono);
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 500;
       text-transform: uppercase;
-      padding: 2px 8px;
-      border-radius: 4px;
+      padding: 3px 10px;
+      border-radius: 6px;
       letter-spacing: 0.05em;
     }
 
@@ -491,21 +500,23 @@
     .compare-list {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
 
     .compare-item {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      font-size: 13px;
+      gap: 12px;
+      font-size: 15px;
       color: var(--text-secondary);
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     .compare-item i, .compare-item svg {
-      margin-top: 2px;
+      margin-top: 3px;
       flex-shrink: 0;
+      width: 18px !important;
+      height: 18px !important;
     }
 
     .compare-item.active {
@@ -663,7 +674,7 @@
       .hero { grid-template-columns: 1fr; text-align: center; }
       .hero-content { align-items: center; }
       h1 { font-size: 42px; }
-      .stepper-grid { grid-template-columns: repeat(3, 1fr); }
+      .stepper-grid { grid-template-columns: repeat(2, 1fr); }
       .compare-grid { grid-template-columns: 1fr; }
       .mock-body { grid-template-columns: 1fr; }
       .mock-sidebar { display: none; }
@@ -682,6 +693,9 @@
       }
       .meta-note {
         text-align: center;
+      }
+      .stepper-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
