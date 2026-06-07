@@ -1,0 +1,23 @@
+{
+  "name": "Sortify AI",
+  "short_name": "Sortify",
+  "start_url": "/dashboard",
+  "theme_color": "#1a1a2e",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/static/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

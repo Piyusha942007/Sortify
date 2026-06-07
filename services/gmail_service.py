@@ -352,3 +352,63 @@ def send_unsubscribe_email(google_id, mailto_uri):
     except Exception as e:
         print(f"Error sending unsubscribe email: {e}")
         return False
+
+def get_recent_emails_detailed(google_id, limit=20):
+    service = get_gmail_service(google_id)
+    if not service: return []
+    try:
+        results = service.users().messages().list(userId="me", maxResults=limit).execute()
+        messages = results.get("messages", [])
+        email_data = []
+        for msg in messages:
+            m = service.users().messages().get(userId="me", id=msg["id"], format="full").execute()
+            payload = m.get("payload", {})
+            headers = payload.get("headers", [])
+            subject = next((h["value"] for h in headers if h["name"].lower() == "subject"), "No Subject")
+            sender = next((h["value"] for h in headers if h["name"].lower() == "from"), "Unknown")
+            date = next((h["value"] for h in headers if h["name"].lower() == "date"), "")
+            
+            snippet = m.get("snippet", "")
+            
+            labels = m.get("labelIds", [])
+            category = "Personal"
+            if "CATEGORY_PROMOTIONS" in labels:
+                category = "Promotions"
+            elif "CATEGORY_SOCIAL" in labels:
+                category = "Social"
+            elif "CATEGORY_UPDATES" in labels:
+                category = "Updates"
+                
+            from models import db, SnoozedEmail
+            snoozed = SnoozedEmail.query.filter_by(google_id=google_id, gmail_message_id=msg["id"]).first()
+            snoozed_until = snoozed.snooze_until.strftime("%Y-%m-%d %H:%M:%S") if snoozed else None
+            reason = snoozed.reason if snoozed else None
+            
+            thread_id = m.get("threadId")
+            
+            # Count messages in this thread
+            thread_msgs_count = 1
+            try:
+                thread_res = service.users().threads().get(userId='me', id=thread_id).execute()
+                thread_msgs_count = len(thread_res.get('messages', []))
+            except Exception:
+                pass
+            
+            email_data.append({
+                "id": msg["id"],
+                "thread_id": thread_id,
+                "sender": sender,
+                "sender_email": sender.split("<")[1].split(">")[0].strip() if "<" in sender else sender,
+                "subject": subject,
+                "snippet": snippet,
+                "category": category,
+                "date": date,
+                "snoozed_until": snoozed_until,
+                "reason": reason,
+                "thread_messages_count": thread_msgs_count
+            })
+        return email_data
+    except Exception as e:
+        print(f"Error fetching detailed emails: {e}")
+        return []
+

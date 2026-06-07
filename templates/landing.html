@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sortify AI — Your Inbox. Finally Under Control.</title>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --glow-color: rgba(99, 102, 241, 0.12);
+      --core-glow: rgba(99, 102, 241, 0.4);
+    }
+
+    body {
+      background-color: #030308;
+      background-image: 
+        radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+        radial-gradient(circle at 10% 40%, rgba(59, 130, 246, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 90% 75%, rgba(167, 139, 250, 0.04) 0%, transparent 40%);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Mouse follow glow effect */
+    .mouse-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 1;
+      mix-blend-mode: screen;
+    }
+
+    /* Professional Navigation Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(3, 3, 8, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 16px;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .brand svg {
+      color: var(--accent);
+      filter: drop-shadow(0 0 8px var(--accent-glow));
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-link {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: color var(--duration-fast);
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-ctas {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Primary CTA */
+    .btn-nav-primary {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.25);
+      transition: all var(--duration-fast);
+    }
+
+    .btn-nav-primary:hover {
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Secondary CTA */
+    .btn-nav-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-default);
+      padding: 7px 14px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--duration-fast);
+    }
+
+    .btn-nav-secondary:hover {
+      border-color: var(--border-strong);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Hero section */
+    .hero {
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 24px 100px;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: center;
+      gap: 48px;
+      z-index: 2;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 28px;
+    }
+
+    .pill-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(99, 102, 241, 0.06);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    .pill-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: demoPulse 1.5s infinite;
+    }
+
+    h1 {
+      font-size: 58px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      color: var(--text-primary);
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, #a78bfa 0%, #6366f1 50%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subheadline {
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      max-width: 540px;
+    }
+
+    .ctas-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%);
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: var(--radius-lg);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 10px 25px -5px rgba(99, 102, 241, 0.3),
+        0 4px 12px -2px rgba(99, 102, 241, 0.15);
+      transition: all var(--duration-base) var(--ease-out);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 1) 0%, rgba(139, 92, 246, 1) 100%);
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 15px 35px -5px rgba(99, 102, 241, 0.45),
+        0 8px 20px -2px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0) scale(0.98);
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 5px 15px -5px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-primary);
+      padding: 13px 26px;
+      border-radius: var(--radius-lg);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: all var(--duration-base) var(--ease-out);
+    }
+
+    .btn-ghost:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-ghost:active {
+      transform: translateY(0) scale(0.98);
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-primary svg, .btn-ghost svg {
+      flex-shrink: 0;
+    }
+
+    .meta-note {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      opacity: 0.6;
+      margin-top: -12px;
+    }
+
+    /* Core Visualizer Container */
+    .visualizer-container {
+      position: relative;
+      height: 480px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #sortingCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .ai-core-glowing-back {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--core-glow) 0%, transparent 75%);
+      filter: blur(12px);
+      z-index: 1;
+      animation: coreBreath 4s infinite ease-in-out;
+    }
+
+    @keyframes coreBreath {
+      0%, 100% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+
+    /* Section container styling */
+    .section-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 52px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-header h2 {
+      font-size: 36px;
+      font-weight: 600;
+      letter-spacing: -1.5px;
+    }
+
+    .section-header h2 span {
+      color: var(--accent);
+    }
+
+    .section-header p {
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* How it works visualizer card grid */
+    .stepper-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      position: relative;
+    }
+
+    .step-card {
+      background: rgba(17, 17, 24, 0.45);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
+
+    .step-card:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+      transform: translateY(-2px);
+      background: rgba(17, 17, 24, 0.7);
+    }
+
+    .step-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+      padding: 3px 8px;
+      border-radius: 10px;
+    }
+
+    .step-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      transition: all 0.3s;
+    }
+
+    .step-card:hover .step-icon {
+      color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+      transform: scale(1.05);
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .step-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Comparison block */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+
+    .compare-card {
+      background: rgba(17, 17, 24, 0.65);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      backdrop-filter: blur(12px);
+    }
+
+    .compare-card.demo-tier {
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .compare-card.gmail-tier {
+      border-color: rgba(99, 102, 241, 0.3);
+      background: linear-gradient(185deg, rgba(99, 102, 241, 0.03) 0%, rgba(17, 17, 24, 0.65) 100%);
+      box-shadow: 0 10px 40px rgba(99, 102, 241, 0.05);
+    }
+
+    .compare-title {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .compare-badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .compare-badge.demo { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+    .compare-badge.gmail { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(99,102,241,0.25); }
+
+    .compare-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .compare-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .compare-item i, .compare-item svg {
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .compare-item.active {
+      color: var(--text-primary);
+    }
+
+    .compare-item.active i, .compare-item.active svg {
+      color: var(--green);
+    }
+
+    /* Dashboard preview fold */
+    .dashboard-preview {
+      background: rgba(17, 17, 24, 0.75);
+      border: 1px solid var(--border-default);
+      box-shadow: 0 30px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      height: 520px;
+    }
+
+    .mock-topbar {
+      height: 48px;
+      background: rgba(24, 24, 31, 0.5);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .window-actions { display: flex; gap: 6px; }
+    .window-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.12); }
+    .window-dot.red { background: #ff5f56; }
+    .window-dot.yellow { background: #ffbd2e; }
+    .window-dot.green { background: #27c93f; }
+
+    .mock-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      overflow: hidden;
+    }
+
+    .mock-sidebar {
+      border-right: 1px solid rgba(255,255,255,0.06);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: rgba(13, 13, 20, 0.2);
+    }
+
+    .mock-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .mock-sidebar-item.active {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .mock-content {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    /* Welcome Metrics inside Mock */
+    .mock-overview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 16px;
+    }
+
+    .mock-overview-title h3 { font-size: 16px; font-weight: 600; }
+    .mock-overview-title p { font-size: 11px; color: var(--text-secondary); }
+
+    .mock-overview-stats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .mock-stat-box {
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .mock-stat-box .val {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .mock-stat-box .lbl {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Mock log list */
+    .mock-feed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mock-feed-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+    }
+
+    .mock-feed-item .event { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); color: var(--text-secondary); }
+    .mock-feed-item .event span { color: var(--text-primary); }
+    .mock-feed-item .ts { color: var(--text-muted); }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.04);
+      padding: 40px 24px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; text-align: center; }
+      .hero-content { align-items: center; }
+      h1 { font-size: 42px; }
+      .stepper-grid { grid-template-columns: repeat(3, 1fr); }
+      .compare-grid { grid-template-columns: 1fr; }
+      .mock-body { grid-template-columns: 1fr; }
+      .mock-sidebar { display: none; }
+      .mock-overview-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .ctas-container {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 12px;
+      }
+      .btn-primary, .btn-ghost {
+        width: 100%;
+      }
+      .meta-note {
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mouse glow follower backdrop -->
+  <div class="mouse-glow" id="mouseGlow"></div>
+
+  <!-- Header / Navigation Bar -->
+  <header>
+    <a href="/" class="brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+        <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+      </svg>
+      Sortify AI
+    </a>
+    
+    <nav class="nav-links">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#how-it-works" class="nav-link">How It Works</a>
+      <a href="#preview" class="nav-link">Demo Dashboard</a>
+      <a href="#compare" class="nav-link">Sandbox vs Gmail</a>
+      <a href="/walkthrough" class="nav-link" style="color: var(--accent);">Walkthrough Guide ↗</a>
+    </nav>
+
+    <div class="nav-ctas">
+      <a href="/demo/enter" class="btn-nav-primary">Open Demo Sandbox</a>
+      <a href="/authorize" class="btn-nav-secondary">Connect Gmail</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="pill-badge">
+        <span class="dot"></span>
+        <span>Version 2.0 Hackathon Sandbox</span>
+      </div>
+      
+      <h1>Your Inbox.<br><span>Finally Under Control.</span></h1>
+      
+      <p class="subheadline">
+        Let AI organize, prioritize, and draft replies while you focus on what matters. An open-source triage command center designed to optimize email workflows.
+      </p>
+      
+      <div class="ctas-container">
+        <a href="/demo/enter" class="btn-primary">
+          <i data-lucide="play" style="width: 15px; height: 15px;"></i>
+          Launch Demo Sandbox
+        </a>
+        <a href="/authorize" class="btn-ghost">
+          <i data-lucide="mail" style="width: 15px; height: 15px;"></i>
+          Connect Gmail Account
+        </a>
+      </div>
+      
+      <span class="meta-note">No authentication or account required for Demo Mode.</span>
+    </div>
+
+    <!-- AI Core Canvas Visualizer -->
+    <div class="visualizer-container">
+      <div class="ai-core-glowing-back"></div>
+      <canvas id="sortingCanvas"></canvas>
+    </div>
+  </section>
+
+  <!-- "How Sortify Thinks" Animation / Visual Steps -->
+  <section class="section-container" id="how-it-works">
+    <div class="section-header">
+      <h2>How <span>Sortify</span> Thinks</h2>
+      <p>A look under the hood. Sortify pipelines emails through an advanced multi-agent categorization loop.</p>
+    </div>
+
+    <div class="stepper-grid">
+      <div class="step-card">
+        <span class="step-num">01</span>
+        <div class="step-icon"><i data-lucide="inbox"></i></div>
+        <div class="step-title">Email Arrives</div>
+        <div class="step-desc">Messages stream in securely from webhooks or sandbox loops.</div>
+      </div>
+      <div class="step-card">
+        <span class="step-num">02</span>
+        <div class="step-icon"><i data-lucide="sparkles"></i></div>
+        <div class="step-title">AI Analysis</div>
+        <div class="step-desc">Gemini Flash inspects details, urgency, and security indicators.</div>
+      </div>
+      <div class="step-card">
+        <span class="step-num">03</span>
+        <div class="step-icon"><i data-lucide="layers"></i></div>
+        <div class="step-title">Smart Rules</div>
+        <div class="step-desc">Filters check mapping tables, domain rules, and templates.</div>
+      </div>
+      <div class="step-card">
+        <span class="step-num">04</span>
+        <div class="step-icon"><i data-lucide="folder-key"></i></div>
+        <div class="step-title">Categorization</div>
+        <div class="step-desc">Emails categorized into Important, Clients, Promo, or Updates.</div>
+      </div>
+      <div class="step-card">
+        <span class="step-num">05</span>
+        <div class="step-icon"><i data-lucide="pen-tool"></i></div>
+        <div class="step-title">Draft Reply</div>
+        <div class="step-desc">Gemini generates draft templates matching prompts.</div>
+      </div>
+      <div class="step-card">
+        <span class="step-num">06</span>
+        <div class="step-icon"><i data-lucide="mail-check"></i></div>
+        <div class="step-title">Gmail Action</div>
+        <div class="step-desc">Labels get written and drafts appended directly to your inbox.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sandbox vs Gmail Comparison block -->
+  <section class="section-container" id="compare">
+    <div class="section-header">
+      <h2>Sandbox Mode <span>vs</span> Connected Gmail</h2>
+      <p>Compare how the sandbox lets you safely review features before authorizing real mailbox access.</p>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card demo-tier">
+        <div class="compare-title">
+          <span>Sandbox Mode</span>
+          <span class="compare-badge demo">Demo Mode</span>
+        </div>
+        <div class="compare-list">
+          <div class="compare-item active">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+            <span>No authentication or credentials required to explore.</span>
+          </div>
+          <div class="compare-item active">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+            <span>Includes simulator widget to trigger emails and phishing alerts dynamically.</span>
+          </div>
+          <div class="compare-item active">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+            <span>Fully persistent SQLite sandbox for editing rules and templates.</span>
+          </div>
+          <div class="compare-item">
+            <i data-lucide="x-circle" style="color: var(--red); width: 16px; height: 16px;"></i>
+            <span>Cannot process real incoming mail or read active threads.</span>
+          </div>
+          <div class="compare-item">
+            <i data-lucide="x-circle" style="color: var(--red); width: 16px; height: 16px;"></i>
+            <span>Drafts are simulated inside dashboard rather than written to Gmail.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare-card gmail-tier">
+        <div class="compare-title">
+          <span>Connected Gmail</span>
+          <span class="compare-badge gmail">Real Mode</span>
+        </div>
+        <div class="compare-list">
+          <div class="compare-item active">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+            <span>Syncs live with your real Google mail inbox.</span>
+          </div>
+          <div class="compare-item active">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+            <span>Automated Gmail label generation (categorizes mail inside Gmail).</span>
+          </div>
+          <div class="compare-item active">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+            <span>Appends AI drafted replies directly in your Gmail "Drafts" folder.</span>
+          </div>
+          <div class="compare-item active">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+            <span>Executes real 1-click mailto or HTTP unsubscriptions.</span>
+          </div>
+          <div class="compare-item active">
+            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+            <span>Actively quarantines live phishing attempts inside logs.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Dashboard Preview fold -->
+  <section class="section-container" id="preview">
+    <div class="section-header">
+      <h2>Futuristic Command Center</h2>
+      <p>Check out the real interface layout that manages email operations.</p>
+    </div>
+
+    <div class="dashboard-preview">
+      <div class="mock-topbar">
+        <div class="window-actions">
+          <div class="window-dot red"></div>
+          <div class="window-dot yellow"></div>
+          <div class="window-dot green"></div>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--accent);">✦ Sortify Mission Control</div>
+        <div style="width: 60px;"></div>
+      </div>
+
+      <div class="mock-body">
+        <div class="mock-sidebar">
+          <div class="mock-sidebar-item active"><i data-lucide="layout-dashboard"></i> Overview</div>
+          <div class="mock-sidebar-item"><i data-lucide="mail"></i> Inbox</div>
+          <div class="mock-sidebar-item"><i data-lucide="layers"></i> Smart Rules</div>
+          <div class="mock-sidebar-item"><i data-lucide="shield-alert"></i> Security</div>
+          <div class="mock-sidebar-item"><i data-lucide="mail-minus"></i> Unsubscribe</div>
+        </div>
+
+        <div class="mock-content">
+          <div class="mock-overview-header">
+            <div class="mock-overview-title">
+              <h3>System Overview</h3>
+              <p>Command center performance metrics</p>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 10px; color: var(--green); display: flex; align-items: center; gap: 6px;">
+              <span style="width: 6px; height: 6px; background: var(--green); border-radius: 50%; display: inline-block;"></span> Active Daemon
+            </div>
+          </div>
+
+          <div class="mock-overview-stats">
+            <div class="mock-stat-box">
+              <span class="val">307</span>
+              <span class="lbl">Analyzed</span>
+            </div>
+            <div class="mock-stat-box">
+              <span class="val">3h 12m</span>
+              <span class="lbl">Time Saved</span>
+            </div>
+            <div class="mock-stat-box">
+              <span class="val">41</span>
+              <span class="lbl">AI Drafts</span>
+            </div>
+            <div class="mock-stat-box">
+              <span class="val" style="color: var(--red);">2</span>
+              <span class="lbl" style="color: var(--red);">Threats Blocked</span>
+            </div>
+            <div class="mock-stat-box" style="border-color: rgba(34, 197, 94, 0.25); background: rgba(34, 197, 94, 0.02);">
+              <span class="val" style="color: var(--green);">96%</span>
+              <span class="lbl">Inbox Health</span>
+            </div>
+          </div>
+
+          <div style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase;">Live activity feed</div>
+          <div class="mock-feed-list">
+            <div class="mock-feed-item">
+              <div class="event"><i data-lucide="check" style="width: 12px; height: 12px; color: var(--green);"></i> <span>[Smart Rules]</span> Classified Stripe invoice to Finance</div>
+              <span class="ts">17:40:02</span>
+            </div>
+            <div class="mock-feed-item">
+              <div class="event"><i data-lucide="shield" style="width: 12px; height: 12px; color: var(--red);"></i> <span>[Phishing Scanner]</span> Flagged phishing mail from Paypal spoof</div>
+              <span class="ts">17:39:15</span>
+            </div>
+            <div class="mock-feed-item">
+              <div class="event"><i data-lucide="sparkles" style="width: 12px; height: 12px; color: var(--accent);"></i> <span>[Gemini AI]</span> Auto-drafted reply template for Slack alert</div>
+              <span class="ts">17:38:45</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Sortify AI v2.0 • Licensed under MIT
+  </footer>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Mouse Glow interactivity
+    const mouseGlow = document.getElementById('mouseGlow');
+    if (window.innerWidth > 900) {
+      document.addEventListener('mousemove', (e) => {
+        gsap.to(mouseGlow, {
+          x: e.clientX,
+          y: e.clientY,
+          duration: 0.1
+        });
+      });
+    }
+
+    // GSAP load animations
+    document.addEventListener("DOMContentLoaded", () => {
+      gsap.from("header", { y: -20, opacity: 0, duration: 0.8, ease: "power3.out" });
+      gsap.from(".hero-content > *", { 
+        y: 28, 
+        opacity: 0, 
+        duration: 0.7, 
+        stagger: 0.12, 
+        ease: "power3.out" 
+      });
+      gsap.from(".visualizer-container", { scale: 0.96, opacity: 0, duration: 1.1, ease: "power3.out" });
+    });
+
+    // ----------------------------------------------------
+    // HIGH FIDELITY HTML5 CANVAS EMAIL SORTING ANIMATION
+    // ----------------------------------------------------
+    const canvas = document.getElementById('sortingCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const categories = [
+      { name: 'Important', color: '#c084fc', x: 0.85, y: 0.25, pulse: 0 },
+      { name: 'Clients', color: '#34d399', x: 0.85, y: 0.45, pulse: 0 },
+      { name: 'Promo', color: '#fb923c', x: 0.85, y: 0.65, pulse: 0 },
+      { name: 'Updates', color: '#60a5fa', x: 0.85, y: 0.85, pulse: 0 },
+      { name: 'Spam', color: '#ef4444', x: 0.15, y: 0.85, pulse: 0 }
+    ];
+
+    const emailsToProcess = [
+      { label: 'Stripe Invoice', category: 'Updates' },
+      { label: 'Mom\'s Roast', category: 'Important' },
+      { label: 'Uber Eats Code', category: 'Promo' },
+      { label: 'Slack Alert', category: 'Important' },
+      { label: 'Paul Graham', category: 'Clients' },
+      { label: 'Netflix Bill', category: 'Updates' },
+      { label: 'Free Coins Spam', category: 'Spam' },
+      { label: 'Pinterest Feed', category: 'Promo' }
+    ];
+
+    class Particle {
+      constructor() {
+        this.reset();
+        this.x = Math.random() * (canvas.width * 0.4);
+      }
+
+      reset() {
+        const item = emailsToProcess[Math.floor(Math.random() * emailsToProcess.length)];
+        this.label = item.label;
+        this.categoryName = item.category;
+        
+        this.x = -100;
+        this.y = canvas.height * (0.3 + Math.random() * 0.4);
+        
+        this.speed = 1.4 + Math.random() * 1.0;
+        this.size = 12;
+        this.state = 'incoming';
+        this.glow = 0;
+        this.alpha = 0;
+        this.targetCategory = categories.find(c => c.name === this.categoryName);
+      }
+
+      update() {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        if (this.state === 'incoming') {
+          this.alpha = Math.min(this.alpha + 0.05, 1);
+          const dx = centerX - this.x;
+          const dy = centerY - this.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 40) {
+            this.state = 'core';
+            this.glow = 1;
+            coreFlash = 10;
+          } else {
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
+          }
+        } 
+        else if (this.state === 'core') {
+          this.glow -= 0.1;
+          if (this.glow <= 0) {
+            this.state = 'sorted';
+          }
+        } 
+        else if (this.state === 'sorted') {
+          const targetX = canvas.width * this.targetCategory.x;
+          const targetY = canvas.height * this.targetCategory.y;
+
+          const dx = targetX - this.x;
+          const dy = targetY - this.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 15) {
+            this.targetCategory.pulse = 10;
+            this.reset();
+          } else {
+            this.x += (dx / dist) * (this.speed * 2.5);
+            this.y += (dy / dist) * (this.speed * 2.5);
+          }
+        }
+      }
+
+      draw() {
+        ctx.save();
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        if (this.state === 'incoming') {
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = 'rgba(255,255,255,0.1)';
+          ctx.fillStyle = `rgba(24, 24, 35, ${this.alpha * 0.85})`;
+          ctx.strokeStyle = `rgba(255,255,255,0.06)`;
+          ctx.lineWidth = 1;
+          
+          drawRoundedRect(ctx, this.x - 55, this.y - 12, 110, 24, 4, true, true);
+
+          ctx.fillStyle = 'rgba(99, 102, 241, 0.7)';
+          ctx.fillRect(this.x - 47, this.y - 5, 10, 8);
+
+          ctx.fillStyle = `rgba(240, 240, 245, ${this.alpha})`;
+          ctx.font = '9px "DM Mono", monospace';
+          ctx.fillText(this.label, this.x - 30, this.y + 2);
+        } 
+        else if (this.state === 'core') {
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(99, 102, 241, ${this.glow * 0.3})`;
+          ctx.fill();
+        } 
+        else if (this.state === 'sorted') {
+          const color = this.targetCategory.color;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = color;
+          
+          ctx.fillStyle = 'rgba(13, 13, 20, 0.9)';
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.2;
+          
+          drawRoundedRect(ctx, this.x - 40, this.y - 10, 80, 20, 10, true, true);
+
+          ctx.beginPath();
+          ctx.arc(this.x - 28, this.y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+
+          ctx.fillStyle = '#f0f0f5';
+          ctx.font = '500 8px "Geist", sans-serif';
+          ctx.fillText(this.targetCategory.name, this.x - 18, this.y + 3);
+        }
+        ctx.restore();
+      }
+    }
+
+    function drawRoundedRect(ctx, x, y, width, height, radius, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    const particles = Array.from({ length: 4 }, () => new Particle());
+    let coreFlash = 0;
+    let coreRotation = 0;
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      ctx.save();
+      ctx.lineWidth = 1.2;
+      categories.forEach(cat => {
+        const tx = canvas.width * cat.x;
+        const ty = canvas.height * cat.y;
+        const grad = ctx.createLinearGradient(cx, cy, tx, ty);
+        grad.addColorStop(0, 'rgba(99, 102, 241, 0.15)');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0.01)');
+        
+        ctx.strokeStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        const midX = (cx + tx) / 2;
+        ctx.quadraticCurveTo(midX, cy, tx, ty);
+        ctx.stroke();
+
+        const time = Date.now() * 0.002;
+        const pulseProgress = (time % 1);
+        const pX = cx + (tx - cx) * pulseProgress;
+        const pY = cy + (ty - cy) * pulseProgress;
+        ctx.beginPath();
+        ctx.arc(pX, pY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = cat.color;
+        ctx.fill();
+      });
+      ctx.restore();
+
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      ctx.save();
+      coreRotation += 0.015;
+      const breath = 1.0 + Math.sin(Date.now() * 0.003) * 0.05;
+
+      ctx.shadowBlur = 25 + coreFlash * 2;
+      ctx.shadowColor = 'rgba(99, 102, 241, 0.5)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 38 * breath, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(99, 102, 241, ${0.4 + coreFlash * 0.05})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 46 * breath, coreRotation, coreRotation + Math.PI * 0.4);
+      ctx.strokeStyle = 'rgba(167, 139, 250, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 46 * breath, coreRotation + Math.PI, coreRotation + Math.PI * 1.4);
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 30 * breath, -coreRotation * 1.5, -coreRotation * 1.5 + Math.PI * 0.6);
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const coreGrad = ctx.createRadialGradient(cx - 5, cy - 5, 2, cx, cy, 20);
+      coreGrad.addColorStop(0, '#a78bfa');
+      coreGrad.addColorStop(0.7, '#6366f1');
+      coreGrad.addColorStop(1, '#1e1b4b');
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 20 * breath, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (coreFlash > 0) coreFlash -= 0.5;
+      ctx.restore();
+
+      categories.forEach(cat => {
+        const tx = canvas.width * cat.x;
+        const ty = canvas.height * cat.y;
+
+        ctx.save();
+        ctx.shadowBlur = 10 + cat.pulse;
+        ctx.shadowColor = cat.color;
+
+        ctx.fillStyle = 'rgba(13, 13, 20, 0.9)';
+        ctx.strokeStyle = `rgba(255,255,255,${0.05 + cat.pulse * 0.05})`;
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, tx - 50, ty - 14, 100, 28, 6, true, true);
+
+        ctx.beginPath();
+        ctx.arc(tx - 38, ty, 4, 0, Math.PI * 2);
+        ctx.fillStyle = cat.color;
+        ctx.fill();
+
+        ctx.fillStyle = '#f0f0f5';
+        ctx.font = '500 10px "Geist", sans-serif';
+        ctx.fillText(cat.name, tx - 24, ty + 4);
+
+        if (cat.pulse > 0) cat.pulse -= 0.5;
+        ctx.restore();
+      });
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+/* 60-Second Product Tour Guide Styling */
+
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 3, 7, 0.82);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99998;
+  display: none;
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.tour-overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+/* Active element spotlight */
+.tour-highlight {
+  position: relative !important;
+  z-index: 99999 !important;
+  box-shadow: 0 0 0 9999px rgba(3, 3, 7, 0.8), 0 0 30px rgba(99, 102, 241, 0.4) !important;
+  outline: 2px solid var(--accent) !important;
+  pointer-events: none !important;
+  background: var(--bg-surface) !important;
+}
+
+/* Tour Popover Container */
+.tour-popover {
+  position: fixed;
+  z-index: 100000;
+  background: rgba(18, 18, 28, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-lg);
+  width: 320px;
+  padding: 18px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-sans);
+  pointer-events: auto;
+}
+
+.tour-popover.show {
+  display: flex;
+}
+
+.tour-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tour-popover-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tour-popover-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast);
+}
+
+.tour-popover-close:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.05);
+}
+
+.tour-popover-body {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tour-popover-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.tour-popover-steps {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.tour-popover-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tour-btn {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: none;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.tour-btn-next {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+}
+
+.tour-btn-next:hover {
+  opacity: 0.95;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.35);
+}
+
+.tour-btn-prev {
+  background: rgba(255,255,255,0.03);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.tour-btn-prev:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.06);
+}
+
+/* Floating Tour Trigger Button */
+.tour-trigger-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 999;
+  background: rgba(13, 13, 22, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.tour-trigger-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  box-shadow: 0 4px 25px rgba(99, 102, 241, 0.2);
+  transform: translateY(-1px);
+}
+
+.tour-trigger-btn i, .tour-trigger-btn svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}

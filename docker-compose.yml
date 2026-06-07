@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  sortify:
+    build: .
+    container_name: sortify-app
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount SQLite database for persistence on host
+      - ./february.db:/app/february.db
+      # Mount token files for persistent authentication if they exist on the host
+      - ./token.json:/app/token.json
+      - ./token.pickle:/app/token.pickle
+    env_file:
+      - .env
+    restart: always

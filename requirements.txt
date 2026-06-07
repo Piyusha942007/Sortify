@@ -6,3 +6,6 @@ google-genai
 google-generativeai
 python-dotenv
 supabase
+flask-sqlalchemy
+pytest
+gunicorn

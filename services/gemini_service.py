@@ -172,3 +172,78 @@ def find_unsubscribe_link_in_body(body_text):
     except Exception as e:
         print(f"DEBUG: find_unsubscribe_link_in_body failed: {e}")
         return None
+
+def suggest_snooze(subject, body):
+    """Suggests a snooze date/time and reason based on subject and body snippet."""
+    if not client:
+        import datetime
+        tomorrow = datetime.datetime.now() + datetime.timedelta(days=1)
+        return {
+            "suggested_time": tomorrow.strftime("%Y-%m-%d 09:00:00"),
+            "reason": "Snooze until tomorrow morning - standard snooze fallback."
+        }
+    
+    system_instruction = """
+    You are an AI assistant helping a user manage their email inbox by suggesting when to snooze an email.
+    Analyze the email subject and body snippet.
+    Suggest a realistic date and time to snooze until (e.g., if it's a weekly newsletter, snooze until next Monday morning; if it's a weekend meetup, snooze until Friday afternoon; if it's a bill due in a week, snooze until 2 days before the due date).
+    Also provide a short, clear one-sentence reason for this suggestion.
+    
+    You MUST output a valid JSON object matching the following structure:
+    {
+      "suggested_time": "YYYY-MM-DD HH:MM:SS",
+      "reason": "Snooze until Monday 9am — this looks like a weekly digest"
+    }
+    
+    Ensure suggested_time is formatted as YYYY-MM-DD HH:MM:SS. The current year is 2026. Make sure the date is in the future.
+    Return ONLY raw JSON, no markdown, no comments.
+    """
+    
+    try:
+        response = client.models.generate_content(
+            model="gemini-flash-latest",
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.2
+            ),
+            contents=f"Subject: {subject}\nBody Snippet: {body}"
+        )
+        text = response.text.strip()
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0].strip()
+        elif "```" in text:
+            text = text.split("```")[1].split("```")[0].strip()
+            
+        return json.loads(text)
+    except Exception as e:
+        print(f"DEBUG: suggest_snooze failed: {e}")
+        import datetime
+        tomorrow = datetime.datetime.now() + datetime.timedelta(days=1)
+        return {
+            "suggested_time": tomorrow.strftime("%Y-%m-%d 09:00:00"),
+            "reason": "Snooze until tomorrow 9am — fallback suggestion."
+        }
+
+def summarize_thread(thread_text):
+    """Summarizes a concatenated email thread in 3 bullet points using Gemini."""
+    if not client:
+        return "• Main Topic: Discussion about the project status.\n• Action Items: Review draft layout files.\n• Status: Ongoing coordination."
+        
+    system_instruction = """
+    Summarize this email thread in 3 bullet points. Be concise. Identify: main topic, any action items, and the current status/resolution if any.
+    Return ONLY the bulleted list. Do not include markdown code block formatting or introductory text.
+    """
+    try:
+        response = client.models.generate_content(
+            model="gemini-flash-latest",
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.2
+            ),
+            contents=thread_text
+        )
+        return response.text.strip()
+    except Exception as e:
+        print(f"DEBUG: summarize_thread failed: {e}")
+        return "• Main Topic: Discussion thread details.\n• Action Items: Action required by recipient.\n• Status: Awaiting response."
+

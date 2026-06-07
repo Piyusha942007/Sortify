@@ -20,6 +20,8 @@
 
   <!-- Custom styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
 </head>
 
 <body class="bg-[#f6f8fc] text-slate-800" style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;">
@@ -68,5 +70,14 @@
   <!-- Scripts -->
   <script src="{{ url_for('static', filename='js/tutorial.js') }}"></script>
   <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js')
+          .then((reg) => console.log('Service Worker registered successfully!', reg.scope))
+          .catch((err) => console.warn('Service Worker registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>

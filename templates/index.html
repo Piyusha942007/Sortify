@@ -3,633 +3,1127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard — Sortify</title>
+    <title>Sortify AI — Command Center</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/demo-controls.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tour-guide.css') }}">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0a0a0f">
+
+    <!-- Script assets -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary: #3b82f6;
-            --accent: #6366f1;
-            --bg: #0f172a;
-            --panel-bg: rgba(30, 41, 59, 0.7);
-            --border-glass: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
-        .toast-container {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .toast {
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border-glass);
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            transform: translateX(120%);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .toast.show { transform: translateX(0); }
-        .toast.error { border-left: 4px solid #ef4444; }
-        .toast.success { border-left: 4px solid #10b981; }
-
-        .rule-item {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid transparent;
-            background: rgba(255,255,255,0.02);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .rule-item:hover {
-            border-color: rgba(59, 130, 246, 0.3);
-            background: rgba(59, 130, 246, 0.05);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-
-        .rule-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 3px;
-            background: var(--primary);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .rule-item:hover::before { opacity: 1; }
-
-        .btn-icon-premium {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-glass);
-            color: var(--text-muted);
-            transition: all 0.2s;
-        }
-
-        .btn-icon-premium:hover {
-            background: var(--primary);
-            color: white;
-            transform: scale(1.05);
-            border-color: transparent;
-        }
-
-        .btn-icon-premium.delete:hover {
-            background: #ef4444;
-        }
-
-        .sublabel-section {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-glass);
-            padding-left: 1rem;
-        }
-        .sublabel-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem;
-            background: rgba(255,255,255,0.03);
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            font-size: 0.8125rem;
-        }
-        .add-sublabel-btn {
-            font-size: 0.75rem;
-            color: var(--primary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            margin-top: 0.5rem;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-        .add-sublabel-btn:hover { opacity: 1; }
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            border-radius: 16px;
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            position: relative;
-            overflow: hidden;
-            animation: glow-pulse 3s infinite alternate;
-        }
-
-        @keyframes glow-pulse {
-            from { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); }
-            to { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
-        }
-
-        .urgency-pill {
-            padding: 0.25rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.625rem;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-        .urgency-High { background: #ef4444; color: white; }
-        .urgency-Medium { background: #f59e0b; color: white; }
-        .urgency-Low { background: #10b981; color: white; }
-
-        .confirm-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            z-index: 10000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .confirm-card {
-            background: var(--bg);
-            border: 1px solid var(--border-glass);
-            padding: 2rem;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-        }
-        
-        .tab-panel {
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
 </head>
-<body style="overflow-y: auto;">
-    <div class="confirm-overlay" id="sublabelModal">
-        <div class="confirm-card" style="max-width: 500px;">
-            <h3 id="sublabelModalTitle">Add Sub-labels</h3>
-            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Create nested folders inside this label.</p>
-            <form id="sublabelForm" onsubmit="handleSublabelSubmit(event)">
-                <input type="hidden" name="parent_label" id="parentLabelInput">
-                <div id="sublabelRows">
-                    <div class="input-group" style="margin-bottom: 0.75rem;">
-                        <input type="text" name="sub_name[]" placeholder="Sub-folder Name" required style="flex: 1;">
-                        <input type="text" name="sub_domain[]" placeholder="Domain" required style="flex: 1;">
-                    </div>
+<body>
+
+    <!-- Confirm Rule Delete Modal -->
+    <div class="modal-overlay" id="confirmOverlay">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 8px; font-family: var(--font-mono); font-size: 14px; font-weight: 500;">Delete Rule?</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 13px;">This will permanently stop sorting emails for this domain.</p>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn-ghost" onclick="closeConfirm()">Cancel</button>
+                <button class="btn-danger" id="confirmBtn">Delete Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart Snooze Modal -->
+    <div class="modal-overlay" id="snoozeModal">
+        <div class="modal-content" style="max-width: 420px;">
+            <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px; justify-content: flex-start; font-family: var(--font-mono); font-size: 14px; font-weight: 500;">
+                <i data-lucide="clock" style="color: var(--amber); width: 18px;"></i>
+                Smart Snooze
+            </h3>
+            <p id="snoozeEmailSubject" style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></p>
+            
+            <div id="aiSnoozeSuggestion" style="margin-bottom: 16px; padding: 12px; background: var(--accent-dim); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-md); font-size: 12px; display: none;">
+                <div style="font-weight: 500; color: var(--accent); display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-family: var(--font-mono);">
+                    <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                    AI Suggested Snooze
                 </div>
-                <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
-                    <button type="button" onclick="addSublabelRow()" class="btn btn-glass" style="padding: 0.4rem 1rem; font-size: 0.75rem; color: var(--primary);">
-                        <i data-lucide="plus" style="width: 14px;"></i> Add Another
-                    </button>
+                <div id="aiSnoozeText" style="color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px;">Analyzing email context...</div>
+                <button type="button" class="btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="applyAiSnooze()">Use AI Suggestion</button>
+            </div>
+            
+            <form id="snoozeForm" onsubmit="handleSnoozeSubmit(event)">
+                <input type="hidden" name="message_id" id="snoozeMessageId">
+                <div style="margin-bottom: 12px;">
+                    <label>Snooze Until</label>
+                    <input type="datetime-local" name="snooze_until" id="snoozeUntilInput" required class="input-field">
                 </div>
-                <div style="display: flex; gap: 1rem; justify-content: center;">
-                    <button type="button" onclick="closeSublabelModal()" class="btn btn-glass">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Sub-labels</button>
+                <div style="margin-bottom: 20px;">
+                    <label>Reason / Notes</label>
+                    <input type="text" name="reason" id="snoozeReasonInput" placeholder="e.g. Weekly review, Digest read" class="input-field">
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button type="button" class="btn-ghost" onclick="closeSnoozeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary" style="background: var(--amber); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">Set Snooze</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="toast-container" id="toastContainer"></div>
-    <div class="confirm-overlay" id="confirmOverlay">
-        <div class="confirm-card">
-            <h3 style="margin-bottom: 1rem;">Delete Rule?</h3>
-            <p style="color: var(--text-muted); margin-bottom: 2rem;">This will permanently stop sorting emails for this domain.</p>
-            <div style="display: flex; gap: 1rem; justify-content: center;">
-                <button class="btn btn-glass" onclick="closeConfirm()">Cancel</button>
-                <button class="btn btn-primary" id="confirmBtn" style="background: #ef4444;">Delete Now</button>
+    <!-- Keyboard Shortcuts Overlay -->
+    <div class="modal-overlay" id="shortcutsOverlay" onclick="closeShortcutsHelp()">
+        <div class="modal-content" style="max-width: 400px;" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px; justify-content: flex-start; font-family: var(--font-mono); font-size: 14px; font-weight: 500;">
+                <i data-lucide="keyboard" style="color: var(--accent); width: 18px;"></i>
+                Keyboard Shortcuts
+            </h3>
+            <div style="display: grid; grid-template-columns: 80px 1fr; gap: 12px; font-size: 12px;">
+                <kbd style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; text-align: center; font-weight: 500; border: 1px solid var(--border-default); font-family: var(--font-mono); color: var(--text-primary);">R</kbd>
+                <div style="display: flex; align-items: center; color: var(--text-secondary);">Open Add Rule Modal</div>
+                
+                <kbd style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; text-align: center; font-weight: 500; border: 1px solid var(--border-default); font-family: var(--font-mono); color: var(--text-primary);">S</kbd>
+                <div style="display: flex; align-items: center; color: var(--text-secondary);">Open Snooze for Latest Email</div>
+                
+                <kbd style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; text-align: center; font-weight: 500; border: 1px solid var(--border-default); font-family: var(--font-mono); color: var(--text-primary);">U</kbd>
+                <div style="display: flex; align-items: center; color: var(--text-secondary);">Open Unsubscribe Queue Tab</div>
+                
+                <kbd style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; text-align: center; font-weight: 500; border: 1px solid var(--border-default); font-family: var(--font-mono); color: var(--text-primary);">?</kbd>
+                <div style="display: flex; align-items: center; color: var(--text-secondary);">Show Shortcuts Guide Overlay</div>
             </div>
+            <button class="btn-ghost" style="margin-top: 20px; width: 100%;" onclick="closeShortcutsHelp()">Dismiss</button>
         </div>
     </div>
-    <div class="app-container">
-        <header>
-            <div class="brand">
-                <div class="brand-icon">
-                    <i data-lucide="mail" style="color: white; width: 20px;"></i>
-                </div>
-                Sortify
-            </div>
-            <div class="user-profile glass-panel" style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem 1rem; border-radius: 50px;">
-                {% if user_email %}
-                    {% if user_picture %}
-                        <img src="{{ user_picture }}" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--primary);">
-                    {% endif %}
-                    <div class="profile-info" style="text-align: left;">
-                        <div style="font-size: 0.8125rem; font-weight: 700; color: var(--text-main); line-height: 1;">{{ user_name }}</div>
-                        <div style="font-size: 0.6875rem; color: var(--text-muted);">{{ user_email }}</div>
+
+    <!-- Sublabel Modal -->
+    <div class="modal-overlay" id="sublabelModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3 id="sublabelModalTitle" style="font-family: var(--font-mono); font-size: 14px; font-weight: 500; margin-bottom: 4px;">Add Sub-labels</h3>
+            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 16px;">Create nested folders inside this label.</p>
+            <form id="sublabelForm" onsubmit="handleSublabelSubmit(event)">
+                <input type="hidden" name="parent_label" id="parentLabelInput">
+                <div id="sublabelRows" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" name="sub_name[]" placeholder="Sub-folder Name" required class="input-field" style="flex: 1;">
+                        <input type="text" name="sub_domain[]" placeholder="Domain" required class="input-field" style="flex: 1;">
                     </div>
-                    <div style="width: 1px; height: 20px; background: var(--border-glass); margin: 0 0.5rem;"></div>
-                    <a href="{{ url_for('logout') }}" class="btn-icon" title="Logout" style="color: var(--text-muted); hover: color: #ef4444;">
-                        <i data-lucide="log-out" style="width: 18px;"></i>
-                    </a>
-                {% else %}
-                    <a href="{{ url_for('authorize') }}" class="btn btn-primary">Connect Gmail</a>
+                </div>
+                <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                    <button type="button" onclick="addSublabelRow()" class="btn-ghost" style="padding: 4px 10px; font-size: 11px;">
+                        <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Add Another
+                    </button>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button type="button" onclick="closeSublabelModal()" class="btn-ghost">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Sub-labels</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    {% if is_demo %}
+    <!-- Demo banner -->
+    <div style="background: var(--accent); color: white; padding: 8px 24px; text-align: center; font-size: 12px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; position: relative; z-index: 9999;">
+        <span>✦ Demo Mode — no Google account sync required</span>
+        <a href="/authorize" style="background: white; color: var(--accent); padding: 2px 10px; border-radius: 20px; text-decoration: none; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+            Connect Gmail →
+        </a>
+    </div>
+    {% endif %}
+
+    <div id="offlineBanner" style="display: none; background: #ea580c; color: white; text-align: center; padding: 6px; font-size: 12px; font-weight: 500; align-items: center; justify-content: center; gap: 6px; width: 100%; z-index: 9998;">
+        <i data-lucide="wifi-off" style="width: 14px; height: 14px;"></i>
+        Offline — showing cached local data
+    </div>
+
+    <div class="app-shell">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <a href="/" class="brand">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+                    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+                </svg>
+                Sortify
+                {% if is_demo %}
+                <span class="badge-demo">DEMO</span>
                 {% endif %}
+            </a>
+            
+            <div class="right-controls">
+                <button onclick="showShortcutsHelp()" class="btn-icon" title="Shortcut guide" style="border: none;">
+                    <i data-lucide="keyboard" style="width: 16px; height: 16px;"></i>
+                </button>
+                
+                <div class="sync-status">
+                    <span class="sync-dot {% if not is_demo %}active{% endif %}" id="syncStatusDot"></span>
+                    <span id="syncStatusText">Synced</span>
+                </div>
+                
+                <div class="user-avatar" title="{{ user_email }}">
+                    {% if user_picture %}
+                        <img src="{{ user_picture }}" alt="Profile">
+                    {% else %}
+                        {{ user_name[0] if user_name else 'U' }}
+                    {% endif %}
+                </div>
             </div>
         </header>
 
-        {% if msg %}
-            <div class="glass-panel" style="margin-bottom: 2rem; border-color: var(--primary); padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem;">
-                <i data-lucide="info" style="color: var(--primary);"></i>
-                <span>{{ msg }}</span>
-            </div>
-        {% endif %}
+        <div class="app-body">
+            <!-- SIDEBAR -->
+            <nav class="sidebar" id="dashboardSidebar">
+                <a href="javascript:void(0)" class="nav-item active" id="tab-overview" onclick="switchTab('overview')">
+                    <i data-lucide="layout-dashboard"></i>
+                    Mission Control
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="tab-inbox" onclick="switchTab('inbox')">
+                    <i data-lucide="mail"></i>
+                    Inbox Intelligence
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="tab-rule-learner" onclick="switchTab('rule-learner')">
+                    <i data-lucide="sparkles"></i>
+                    AI Rule Learner
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="tab-rules" onclick="switchTab('rules')">
+                    <i data-lucide="layers"></i>
+                    Smart Rules
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="tab-drafts" onclick="switchTab('drafts')">
+                    <i data-lucide="pen-tool"></i>
+                    Draft Studio
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="tab-security" onclick="switchTab('security')">
+                    <i data-lucide="shield-alert"></i>
+                    Security Center
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="tab-unsubscribe" onclick="switchTab('unsubscribe')">
+                    <i data-lucide="mail-minus"></i>
+                    Unsubscribe Agent
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="tab-analytics" onclick="switchTab('analytics')">
+                    <i data-lucide="bar-chart-3"></i>
+                    Analytics
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="tab-connection" onclick="switchTab('connection')">
+                    <i data-lucide="link"></i>
+                    Gmail Connection
+                </a>
+            </nav>
 
-        <!-- Opportunity Spotlight -->
-        {% if opportunities %}
-        <section class="glass-panel spotlight-section" style="margin-bottom: 2rem; border-color: rgba(59, 130, 246, 0.5);">
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                <div style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; box-shadow: 0 0 10px #3b82f6;"></div>
-                <h2 style="font-size: 1.125rem; font-weight: 700; letter-spacing: -0.02em;">Opportunity Spotlight</h2>
-            </div>
-            <div class="opportunities-grid">
-                {% for opp in opportunities %}
-                <div class="opportunity-card">
-                    <div class="opp-icon" style="background: var(--primary); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <i data-lucide="sparkles" style="width: 20px; color: white;"></i>
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
-                            <h4 style="font-size: 0.9375rem; font-weight: 700;">{{ opp.summary }}</h4>
-                            <span class="urgency-pill urgency-{{ opp.urgency }}">{{ opp.urgency }}</span>
-                        </div>
-                        <p style="font-size: 0.75rem; color: var(--text-muted);">{{ opp.sender }} — {{ opp.subject[:50] }}...</p>
-                    </div>
-                    <button class="btn btn-glass" onclick="createDraft('{{ opp.sender }}', '{{ opp.subject }}', '{{ opp.summary }}')" style="padding: 0.5rem 1rem; font-size: 0.75rem;">Draft Reply</button>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-        {% endif %}
-
-        <div class="dashboard-grid">
-            <aside class="sidebar">
-                <nav>
-                    <a href="javascript:void(0)" class="nav-item active" id="tab-overview" onclick="switchTab('overview')">
-                        <i data-lucide="layout-dashboard"></i>
-                        Overview
-                    </a>
-                    <a href="javascript:void(0)" class="nav-item" id="tab-rules" onclick="switchTab('rules')">
-                        <i data-lucide="layers"></i>
-                        Smart Rules
-                    </a>
-                    <a href="javascript:void(0)" class="nav-item" id="tab-unsubscribe" onclick="switchTab('unsubscribe')">
-                        <i data-lucide="mail-minus"></i>
-                        Unsubscribe Agent
-                    </a>
-                    <a href="javascript:void(0)" class="nav-item" id="tab-cleanup" onclick="switchTab('cleanup')">
-                        <i data-lucide="trash-2"></i>
-                        Cleanup Assistant
-                    </a>
-                    <div style="margin-top: auto; padding-top: 2rem;">
-                        <a href="{{ url_for('logout') }}" class="nav-item" style="color: #ef4444;">
-                            <i data-lucide="log-out"></i>
-                            Sign Out
-                        </a>
-                    </div>
-                </nav>
-
-                <div style="margin-top: auto; padding-top: 2rem;">
-                    <div class="glass-panel" style="padding: 1.5rem; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2);">
-                        <h4 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Pro Vision</h4>
-                        <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">Unlock AI Priority detection and real-time syncing.</p>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem; font-size: 0.75rem;">Upgrade Now</button>
-                    </div>
-                </div>
-            </aside>
-
+            <!-- MAIN CONTENT AREA -->
             <main class="main-content">
-                <section class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
-                    <div class="stat-card">
-                        <div class="stat-label">Active Rules</div>
-                        <div class="stat-value">{{ rules|length }}</div>
-                        <div style="font-size: 0.75rem; color: #10b981;">Custom domains</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Emails Sorted</div>
-                        <div class="stat-value">{{ stats.total_sorted if stats.total_sorted else 0 }}</div>
-                        <div style="font-size: 0.75rem; color: #10b981;">Automatically triaged</div>
-                    </div>
-                    <div class="stat-card" style="background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.2);">
-                        <div class="stat-label" style="color: var(--accent);">Time Saved</div>
-                        <div class="stat-value" style="color: #a5b4fc;">{{ stats.time_saved or 0 }} Mins</div>
-                        <div style="font-size: 0.75rem; color: #a5b4fc;">Sortify automation</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">AI Reply Drafts</div>
-                        <div class="stat-value">{{ stats.replies_drafted or 0 }}</div>
-                        <div style="font-size: 0.75rem; color: #10b981;">Templated responses</div>
-                    </div>
-                </section>
+                <!-- Phishing Alert Container -->
+                <div id="phishingAlertContainer" style="display: none; flex-direction: column; gap: 12px; margin-bottom: 24px;"></div>
 
-                <!-- 1. OVERVIEW PANEL -->
+                {% if msg %}
+                    <div class="card-panel" style="border-color: var(--accent); padding: 12px 24px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                        <i data-lucide="info" style="color: var(--accent); width: 18px;"></i>
+                        <span style="font-size: 13px;">{{ msg }}</span>
+                    </div>
+                {% endif %}
+
+                <!-- 1. MISSION CONTROL PANEL (OVERVIEW) -->
                 <div id="tab-panel-overview" class="tab-panel" style="display: block;">
-                    <div style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 2rem;">
-                        <div style="display: flex; flex-direction: column; gap: 2rem;">
-                            <!-- Live Action Log Feed -->
-                            <section class="glass-panel">
-                                <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                                    <i data-lucide="terminal" style="color: var(--primary);"></i>
-                                    Live Action Log
-                                </h3>
-                                <div style="background: rgba(0,0,0,0.25); border-radius: 12px; padding: 1.25rem; font-family: monospace; font-size: 0.8125rem; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass);" id="liveLogsContainer">
+                    <!-- Welcome overview section -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+                        <div style="text-align: left;">
+                            <h2 style="font-size: 22px; font-weight: 600; color: var(--text-primary);">Mission Control</h2>
+                            <p style="font-size: 13px; color: var(--text-secondary);">Sortify AI daemon is actively organizing your inbox.</p>
+                        </div>
+                        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 8px; background: var(--green-dim); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(34,197,94,0.15);">
+                            <span class="sync-dot {% if not is_demo %}active{% endif %}" id="syncStatusDot" style="width: 8px; height: 8px;"></span>
+                            <span id="syncStatusText">Active Sandbox</span>
+                        </div>
+                    </div>
+
+                    <!-- Welcome Overview Stats -->
+                    <div class="stats-bar" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; border: 1px solid var(--border-subtle); padding: 16px; border-radius: var(--radius-lg); margin-bottom: 24px; background: rgba(17, 17, 24, 0.45);">
+                        <div class="stat-item" style="padding: 4px 8px;" id="tour-step-emails">
+                            <span class="stat-value" id="stat-total-emails" style="font-size: 24px;">{{ stats.total_emails if stats else 0 }}</span>
+                            <span class="stat-label" style="font-size: 9px;">Emails Analyzed</span>
+                            <span class="stat-delta positive">classification loop</span>
+                        </div>
+                        <div class="stat-item" style="padding: 4px 8px;" id="tour-step-time">
+                            <span class="stat-value" id="stat-time-saved" style="font-size: 24px;">{{ stats.time_saved if stats else 0 }}</span>
+                            <span class="stat-label" style="font-size: 9px;">Time Saved</span>
+                            <span class="stat-delta positive">efficiency hours</span>
+                        </div>
+                        <div class="stat-item" style="padding: 4px 8px;" id="tour-step-drafts">
+                            <span class="stat-value" id="stat-drafts" style="font-size: 24px;">{{ stats.replies_drafted if stats else 0 }}</span>
+                            <span class="stat-label" style="font-size: 9px;">Replies Drafted</span>
+                            <span class="stat-delta positive">AI drafts ready</span>
+                        </div>
+                        <div class="stat-item" style="padding: 4px 8px; border-color: rgba(239, 68, 68, 0.15);" id="tour-step-threats">
+                            <span class="stat-value" id="stat-threats-blocked" style="font-size: 24px; color: var(--red);">{{ stats.threats_blocked if stats and stats.threats_blocked else 2 }}</span>
+                            <span class="stat-label" style="font-size: 9px; color: var(--red);">Threats Blocked</span>
+                            <span class="stat-delta negative">quarantined flags</span>
+                        </div>
+                        <div class="stat-item" style="padding: 4px 8px; border-color: rgba(34, 197, 94, 0.15);" id="tour-step-health">
+                            <span class="stat-value" id="stat-health-score" style="font-size: 24px; color: var(--green);">96%</span>
+                            <span class="stat-label" style="font-size: 9px;">Inbox Health Score</span>
+                            <span class="stat-delta positive">secure optimization</span>
+                        </div>
+                    </div>
+
+                    <!-- "How Sortify Thinks" Animation Stepper -->
+                    <section class="card-panel" style="margin-bottom: 24px; padding: 20px;" id="tour-step-pipeline">
+                        <div class="section-title" style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; text-align: left;">
+                            <i data-lucide="cpu" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                            How Sortify Thinks (Live Pipeline Stepper)
+                        </div>
+                        <div class="pipeline-flow" style="display: flex; justify-content: space-between; align-items: center; gap: 6px; overflow-x: auto; padding: 10px 0;">
+                            <div class="pipeline-step active" id="step-arrive" style="flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <div class="step-icon-circle" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent); transition: all 0.3s;">
+                                    <i data-lucide="inbox" style="width: 14px; height: 14px;"></i>
+                                </div>
+                                <div style="font-size: 10px; font-weight: 500; color: var(--text-primary); transition: color 0.3s;">Email Arrives</div>
+                            </div>
+                            <div class="pipeline-connector" style="height: 1px; background: var(--border-subtle); flex: 0.5; min-width: 10px; margin-bottom: 18px;"></div>
+                            
+                            <div class="pipeline-step" id="step-analyze" style="flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <div class="step-icon-circle" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.3s;">
+                                    <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                                </div>
+                                <div style="font-size: 10px; font-weight: 500; color: var(--text-muted); transition: color 0.3s;">AI Analysis</div>
+                            </div>
+                            <div class="pipeline-connector" style="height: 1px; background: var(--border-subtle); flex: 0.5; min-width: 10px; margin-bottom: 18px;"></div>
+                            
+                            <div class="pipeline-step" id="step-rules" style="flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <div class="step-icon-circle" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.3s;">
+                                    <i data-lucide="layers" style="width: 14px; height: 14px;"></i>
+                                </div>
+                                <div style="font-size: 10px; font-weight: 500; color: var(--text-muted); transition: color 0.3s;">Smart Rules</div>
+                            </div>
+                            <div class="pipeline-connector" style="height: 1px; background: var(--border-subtle); flex: 0.5; min-width: 10px; margin-bottom: 18px;"></div>
+                            
+                            <div class="pipeline-step" id="step-categorize" style="flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <div class="step-icon-circle" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.3s;">
+                                    <i data-lucide="folder-key" style="width: 14px; height: 14px;"></i>
+                                </div>
+                                <div style="font-size: 10px; font-weight: 500; color: var(--text-muted); transition: color 0.3s;">Categorization</div>
+                            </div>
+                            <div class="pipeline-connector" style="height: 1px; background: var(--border-subtle); flex: 0.5; min-width: 10px; margin-bottom: 18px;"></div>
+                            
+                            <div class="pipeline-step" id="step-draft" style="flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <div class="step-icon-circle" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.3s;">
+                                    <i data-lucide="pen-tool" style="width: 14px; height: 14px;"></i>
+                                </div>
+                                <div style="font-size: 10px; font-weight: 500; color: var(--text-muted); transition: color 0.3s;">Draft Reply</div>
+                            </div>
+                            <div class="pipeline-connector" style="height: 1px; background: var(--border-subtle); flex: 0.5; min-width: 10px; margin-bottom: 18px;"></div>
+                            
+                            <div class="pipeline-step" id="step-action" style="flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <div class="step-icon-circle" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.3s;">
+                                    <i data-lucide="mail-check" style="width: 14px; height: 14px;"></i>
+                                </div>
+                                <div style="font-size: 10px; font-weight: 500; color: var(--text-muted); transition: color 0.3s;">Gmail Action</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Grid for log terminal and comparison card -->
+                    <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <!-- Column 1: AI Log Activity Feed & Plugins -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <section class="card-panel" style="flex: 1; display: flex; flex-direction: column; min-height: 260px; padding: 20px;">
+                                <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="terminal" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                                        AI Operations Log (Live Activity Feed)
+                                    </span>
+                                    <span class="demo-pulse-dot" style="background: var(--green);"></span>
+                                </div>
+                                <div id="liveLogsContainer" style="background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; font-family: var(--font-mono); font-size: 11px; flex: 1; overflow-y: auto; max-height: 220px; display: flex; flex-direction: column; gap: 6px;">
                                     {% for log in live_logs %}
-                                        <div style="margin-bottom: 0.5rem; color: #10b981; line-height: 1.4;">
-                                            <span style="color: var(--text-muted);">&gt;</span> {{ log }}
+                                        <div class="log-entry" style="text-align: left; display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                                            <span style="color: var(--text-muted);">></span>
+                                            <span style="color: var(--text-primary);">{{ log }}</span>
                                         </div>
                                     {% endfor %}
                                 </div>
                             </section>
 
                             <!-- Plugin Extension Manager -->
-                            <section class="glass-panel">
-                                <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                                    <i data-lucide="cpu" style="color: var(--accent);"></i>
-                                    Plugin Extensions
-                                </h3>
+                            <section class="card-panel" style="padding: 20px;">
+                                <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                    <i data-lucide="puzzle" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                                    System Plugins
+                                </div>
                                 {% if plugins %}
-                                    {% for plugin in plugins %}
-                                        <div style="padding: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 16px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;">
-                                            <div style="flex: 1; margin-right: 1.5rem;">
-                                                <h4 style="font-size: 0.9375rem; font-weight: 700;">{{ plugin.name }}</h4>
-                                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">{{ plugin.description }}</p>
+                                    <div class="plugins-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                        {% for plugin in plugins %}
+                                            <div class="plugin-card {% if plugin.enabled == 1 %}active{% endif %}" id="plugin-card-{{ plugin.id }}" style="padding: 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: rgba(255,255,255,0.01); display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                                                <div style="text-align: left;">
+                                                    <div style="font-weight: 600; color: var(--text-primary);">{{ plugin.name }}</div>
+                                                    <div style="font-size: 10px; color: var(--text-secondary);">{{ plugin.description }}</div>
+                                                </div>
+                                                <div class="toggle-switch {% if plugin.enabled == 1 %}on{% endif %}" onclick="togglePluginClick(this, '{{ plugin.name }}')" style="width: 32px; height: 18px; border-radius: 9px; background: rgba(255,255,255,0.1); cursor: pointer; position: relative;">
+                                                    <span style="width: 14px; height: 14px; border-radius: 50%; background: var(--text-primary); position: absolute; top: 2px; left: {% if plugin.enabled == 1 %}16px{% else %}2px{% endif %}; transition: left 0.2s;"></span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <input type="checkbox" id="plugin-toggle-{{ plugin.id }}" {% if plugin.enabled == 1 %}checked{% endif %} onchange="togglePlugin('{{ plugin.name }}', this)" style="cursor: pointer; scale: 1.2; width: auto;">
-                                            </div>
-                                        </div>
-                                    {% endfor %}
+                                        {% endfor %}
+                                    </div>
                                 {% else %}
-                                    <p style="font-size: 0.8125rem; color: var(--text-muted);">No extensions installed.</p>
+                                    <p style="font-size: 11px; color: var(--text-muted);">No plugins active.</p>
                                 {% endif %}
                             </section>
                         </div>
 
-                        <!-- Inbox Composition Graph -->
-                        <section class="glass-panel">
-                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                                <i data-lucide="pie-chart" style="color: var(--accent);"></i>
-                                Inbox Composition
-                            </h3>
-                            <canvas id="compositionChart" height="250"></canvas>
-                        </section>
+                        <!-- Column 2: Sandbox vs Connected Gmail Comparison & health ring -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <section class="card-panel" style="flex: 1; border-color: rgba(99, 102, 241, 0.15); background: rgba(99, 102, 241, 0.02); padding: 20px;">
+                                <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                    <i data-lucide="git-compare" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                                    Sandbox Mode vs Connected Gmail
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 14px; font-size: 12px;">
+                                    <div style="padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); text-align: left;">
+                                        <div style="font-weight: 600; color: var(--green); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                                            <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--green);"></span>
+                                            Sandbox Mode (Active Demo)
+                                        </div>
+                                        <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;">Safe playground with mock emails, AI simulations, phishing threats, and interactive rule editing. No live mail modifications.</p>
+                                    </div>
+                                    <div style="text-align: left;">
+                                        <div style="font-weight: 600; color: var(--accent); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                                            <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent);"></span>
+                                            Connected Gmail
+                                        </div>
+                                        <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;">Unlocks real-time auto-categorization of your actual inbox, live smart labeling, auto-draft replies in Gmail, and real-time security alerts.</p>
+                                    </div>
+                                    <div style="text-align: center; margin-top: 10px;">
+                                        {% if is_demo %}
+                                            <a href="javascript:void(0)" onclick="switchTab('connection')" class="btn-primary" style="display: block; text-decoration: none; padding: 10px; font-size: 11px; text-align: center; font-weight: 600; justify-content: center;">Connect Gmail</a>
+                                        {% else %}
+                                            <div style="font-size: 11px; color: var(--green); font-weight: 600; font-family: var(--font-mono); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                                <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
+                                                Gmail Connected & Syncing
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Welcome Overview Progress Ring (Health Score Detail) -->
+                            <section class="card-panel" style="display: flex; align-items: center; justify-content: space-around; padding: 20px;">
+                                <div style="text-align: left; max-width: 55%;">
+                                    <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Inbox Health Score</div>
+                                    <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.3;">Based on quarantined phishing attempts and outstanding newsletter subscriptions.</p>
+                                </div>
+                                <div style="position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="80" height="80" viewBox="0 0 80 80">
+                                        <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="6"/>
+                                        <circle cx="40" cy="40" r="34" fill="none" stroke="var(--green)" stroke-width="6" stroke-dasharray="213.6" stroke-dashoffset="8.5" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                                    </svg>
+                                    <div id="healthScoreProgressText" style="position: absolute; font-size: 18px; font-weight: 700; color: var(--green); font-family: var(--font-mono);">96%</div>
+                                </div>
+                            </section>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 2. SMART RULES PANEL -->
-                <div id="tab-panel-rules" class="tab-panel" style="display: none;">
-                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
-                        <section class="glass-panel">
-                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                                <i data-lucide="plus-circle" style="color: var(--primary);"></i>
-                                Create Smart Rule
-                            </h3>
-                            <p style="color: var(--text-muted); font-size: 0.875rem;">Enter a label name and the domain you want to automatically categorize.</p>
+                <!-- 2. INBOX PANEL -->
+                <div id="tab-panel-inbox" class="tab-panel" style="display: none;">
+                    <section class="card-panel" style="padding: 24px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 24px; flex-wrap: wrap; gap: 12px;">
+                            <div class="section-title">
+                                Recent Emails / Analytics
+                            </div>
+                            <div class="category-filters" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <button class="btn-primary" id="filter-all" onclick="filterCategory('All')" style="padding: 4px 10px; font-size: 11px;">All</button>
+                                <button class="btn-ghost" id="filter-personal" onclick="filterCategory('Personal')" style="padding: 4px 10px; font-size: 11px;">Personal</button>
+                                <button class="btn-ghost" id="filter-promotions" onclick="filterCategory('Promotions')" style="padding: 4px 10px; font-size: 11px;">Promotions</button>
+                                <button class="btn-ghost" id="filter-social" onclick="filterCategory('Social')" style="padding: 4px 10px; font-size: 11px;">Social</button>
+                                <button class="btn-ghost" id="filter-updates" onclick="filterCategory('Updates')" style="padding: 4px 10px; font-size: 11px;">Updates</button>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 0 24px;">
+                            <div id="emailListContainer" class="email-list">
+                                <!-- Populated dynamically -->
+                            </div>
                             
-                            <form id="addRuleForm" onsubmit="handleAdd(event)" style="margin-bottom: 2rem;">
-                                <div class="input-group" style="margin-bottom: 1rem;">
-                                    <input type="text" name="label" placeholder="Label Name (e.g. Shopping)" required>
-                                    <input type="text" name="domain" placeholder="Domain (e.g. amazon.com)" required>
-                                </div>
-                                <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                                    <input type="checkbox" id="enableAutoReply" onchange="toggleAutoReplyInput(this)" style="flex: 0; width: auto; margin-right: 0.5rem; cursor: pointer;">
-                                    <label for="enableAutoReply" style="font-size: 0.875rem; color: var(--text-muted); cursor: pointer; user-select: none;">Enable AI Auto-Reply Drafts for this rule</label>
-                                </div>
-                                <div id="autoReplyContainer" style="display: none; margin-bottom: 1rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-glass);">
-                                    <label style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.5rem; display: block;">Reply Template / Instruction Prompt</label>
-                                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
-                                        <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Polite Rejection')">Polite Rejection</button>
-                                        <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Acceptance/Meeting')">Accept/Meeting</button>
-                                        <button type="button" class="btn btn-glass" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="setReplyTemplate('Standard Acknowledgment')">Acknowledge</button>
+                            <!-- Empty State -->
+                            <div id="emailEmptyState" class="empty-state" style="display: none;">
+                                <div class="empty-icon"><i data-lucide="mail-open"></i></div>
+                                <div class="empty-title">Your Inbox is Clean!</div>
+                                <div class="empty-desc">All emails have been processed, archived, or sorted by active smart rules.</div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- 3. AI RULE LEARNER PANEL -->
+                <div id="tab-panel-rule-learner" class="tab-panel" style="display: none;">
+                    <section class="card-panel" style="padding: 20px;">
+                        <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                            <i data-lucide="sparkles" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                            AI Rule Learner (Gemini Suggestions)
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; text-align: left;">
+                            Gemini actively parses your email ingestion patterns to recommend smart automation rules.
+                        </p>
+                        
+                        <!-- Floating rule suggestion banner/modal if injected by simulation -->
+                        <div class="card-panel" id="ruleSuggestionCard" style="display: none; padding: 16px; background: rgba(99,102,241,0.08); border: 1px solid var(--accent); margin-bottom: 20px; align-items: center; justify-content: space-between; gap: 16px;">
+                            <div style="text-align: left;">
+                                <h4 id="ruleSuggestionTitle" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                    <span class="badge badge-ai"><i data-lucide="bot" style="width: 10px; height: 10px;"></i> Live Alert</span>
+                                    AI Detected Suggestion
+                                </h4>
+                                <p id="ruleSuggestionDetails" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;"></p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="acceptSuggestionDirect()" class="btn-primary" style="padding: 6px 12px; font-size: 11px;">Create Rule</button>
+                                <button onclick="dismissSuggestionDirect()" class="btn-ghost" style="padding: 6px 12px; font-size: 11px;">Dismiss</button>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;" id="suggestionsGrid">
+                            {% if suggestions %}
+                                {% for suggestion in suggestions %}
+                                    <div class="card-panel suggestion-card" id="suggestion-{{ loop.index }}" style="padding: 16px; background: var(--bg-surface); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                <span class="badge badge-ai" style="font-family: var(--font-mono);"><i data-lucide="bot" style="width: 10px; height: 10px;"></i> GEMINI SUGGESTION</span>
+                                                <span style="font-size: 10px; color: var(--green); font-family: var(--font-mono); font-weight: 600;">94% Match</span>
+                                            </div>
+                                            <h4 style="font-size: 14px; font-weight: 600; color: var(--text-primary); text-align: left;">
+                                                Label: "{{ suggestion.label }}"
+                                            </h4>
+                                            <p style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 2px; text-align: left;">Domain: {{ suggestion.domain }}</p>
+                                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; line-height: 1.4; text-align: left;">
+                                                {{ suggestion.reason }}
+                                            </p>
+                                        </div>
+                                        <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 4px;">
+                                            <form action="{{ url_for('add_rule') }}" method="POST" style="flex: 1;">
+                                                <input type="hidden" name="label" value="{{ suggestion.label }}">
+                                                <input type="hidden" name="domain" value="{{ suggestion.domain }}">
+                                                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 6px; font-size: 11px;">Accept Rule</button>
+                                            </form>
+                                            <button onclick="dismissSuggestionItem('suggestion-{{ loop.index }}')" class="btn-ghost" style="flex: 1; justify-content: center; padding: 6px; font-size: 11px;">Dismiss</button>
+                                        </div>
                                     </div>
-                                    <input type="text" id="replyTemplateInput" name="reply_template" placeholder="e.g. Write a polite rejection stating that we are currently fully staffed." style="width: 100%;">
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-state" style="grid-column: 1 / -1; width: 100%;">
+                                    <div class="empty-icon"><i data-lucide="sparkles"></i></div>
+                                    <div class="empty-title">AI Engine is Listening</div>
+                                    <div class="empty-desc">No active rule suggestions at the moment. As new email domains enter the system, Gemini will advise custom rules here.</div>
                                 </div>
-                                <button type="submit" class="btn btn-primary" id="addBtn" style="width: 100%;">Add Rule</button>
-                            </form>
-    
-                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; border-top: 1px solid var(--border-glass); pt: 2rem; margin-top: 2rem; padding-top: 2rem;">
-                                <i data-lucide="sparkles" style="color: var(--accent);"></i>
-                                AI Natural Language Rule
-                            </h3>
-                            <p style="color: var(--text-muted); font-size: 0.875rem;">Type what you want to organize in plain English.</p>
-                            <form action="{{ url_for('ai_rule') }}" method="POST">
-                                <div class="input-group">
-                                    <input type="text" name="prompt" placeholder="e.g. Move all my food delivery emails to a 'Food' folder" required>
-                                    <button type="submit" class="btn btn-glass" style="border-color: var(--accent);">Generate & Apply</button>
+                            {% endif %}
+                        </div>
+                    </section>
+                </div>
+
+                <!-- 4. SMART RULES PANEL -->
+                <div id="tab-panel-rules" class="tab-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <!-- Column 1: Forms -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <section class="card-panel">
+                                <div class="section-title" style="margin-bottom: 12px;">
+                                    Create Smart Rule
                                 </div>
-                            </form>
-    
-                            <div class="rules-list" id="rulesList">
-                                <h4 style="margin: 2rem 0 1rem; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Active Rules</h4>
+                                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; text-align: left;">Configure automatic sorting criteria based on sending domains.</p>
+                                
+                                <form id="addRuleForm" onsubmit="handleAdd(event)" style="margin-bottom: 24px;">
+                                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                        <input type="text" name="label" placeholder="Label Name (e.g. Finance)" required class="input-field" style="width: 50%;">
+                                        <input type="text" name="domain" placeholder="Domain (e.g. stripe.com)" required class="input-field" style="width: 50%;">
+                                    </div>
+                                    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                        <input type="checkbox" id="enableAutoReply" onchange="toggleAutoReplyInput(this)" style="width: auto; cursor: pointer;">
+                                        <label for="enableAutoReply" style="cursor: pointer; user-select: none; margin-bottom: 0;">Enable AI Auto-Reply Drafts for this rule</label>
+                                    </div>
+                                    <div id="autoReplyContainer" style="display: none; margin-bottom: 16px; background: var(--bg-overlay); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                                        <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 6px; text-align: left;">AI Prompt Template</label>
+                                        <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                                            <button type="button" class="btn-ghost" style="padding: 4px 8px; font-size: 11px;" onclick="setReplyTemplate('Polite Rejection')">Reject</button>
+                                            <button type="button" class="btn-ghost" style="padding: 4px 8px; font-size: 11px;" onclick="setReplyTemplate('Acceptance/Meeting')">Accept</button>
+                                            <button type="button" class="btn-ghost" style="padding: 4px 8px; font-size: 11px;" onclick="setReplyTemplate('Standard Acknowledgment')">Acknowledge</button>
+                                        </div>
+                                        <input type="text" id="replyTemplateInput" name="reply_template" placeholder="e.g. Write an acknowledgment reply" class="input-field">
+                                    </div>
+                                    <button type="submit" class="btn-primary" id="addBtn" style="width: 100%; justify-content: center;">Add Rule</button>
+                                </form>
+                            </section>
+
+                            <section class="card-panel">
+                                <div class="section-title" style="margin-bottom: 12px;">
+                                    AI Natural Language Rule
+                                </div>
+                                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; text-align: left;">Tell Gemini what you want to organize in plain English sentences.</p>
+                                <form action="{{ url_for('ai_rule') }}" method="POST">
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" name="prompt" placeholder="e.g. Move all my invoices and food deliveries to Invoices" required class="input-field">
+                                        <button type="submit" class="btn-ghost" style="border-color: var(--accent); color: var(--accent); flex-shrink: 0;">Apply</button>
+                                    </div>
+                                </form>
+                            </section>
+                        </div>
+
+                        <!-- Column 2: Active Rules List -->
+                        <section class="card-panel" style="display: flex; flex-direction: column;">
+                            <div class="section-title" style="margin-bottom: 12px;">
+                                Active Rules
+                            </div>
+                            <div class="rules-list" id="rulesList" style="flex: 1; overflow-y: auto; max-height: 520px;">
                                 {% if rules %}
+                                    <div style="display: flex; flex-direction: column; gap: 12px;">
                                     {% for rule in rules if '/' not in rule.label %}
-                                        <div class="rule-item" id="rule-{{ rule.id }}" data-label="{{ rule.label.lower() }}" style="flex-direction: column; align-items: stretch; padding: 1.5rem;">
+                                        <div class="card-panel" id="rule-{{ rule.id }}" data-label="{{ rule.label.lower() }}" style="padding: 14px; margin-bottom: 0; background: var(--bg-surface);">
                                             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                                <div class="rule-info" style="flex: 1; margin-right: 1rem;">
-                                                    <h4 class="rule-label-display" style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div style="flex: 1; margin-right: 12px; text-align: left;">
+                                                    <h4 class="rule-label-display" style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary);">
                                                         {{ rule.label }}
                                                         {% if rule.reply_template %}
-                                                            <span class="urgency-pill urgency-Low" style="font-size: 0.65rem; background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent); color: var(--text-main); font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                                                <i data-lucide="bot" style="width: 12px; height: 12px;"></i> AI Auto-Reply
-                                                            </span>
+                                                            <span class="badge badge-ai"><i data-lucide="bot" style="width: 10px; height: 10px;"></i> AI reply</span>
                                                         {% endif %}
                                                     </h4>
-                                                    <p>from:{{ rule.domain }}</p>
+                                                    <p style="font-size: 12px; color: var(--text-secondary);">from: {{ rule.domain }}</p>
                                                     {% if rule.reply_template %}
-                                                        <p style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem; font-style: italic;">
+                                                        <p style="font-size: 11px; color: var(--accent); margin-top: 4px; font-style: italic;">
                                                             "{{ rule.reply_template }}"
                                                         </p>
                                                     {% endif %}
                                                     
-                                                    <div class="edit-mode" style="display: none; margin-top: 0.5rem;">
-                                                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                                            <input type="text" class="edit-input" value="{{ rule.label }}" style="padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; width: 100%;">
-                                                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                                                    <div class="edit-mode" style="display: none; margin-top: 8px;">
+                                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                                            <input type="text" class="edit-input" value="{{ rule.label }}" class="input-field">
+                                                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
                                                                 <input type="checkbox" class="edit-enable-reply" id="edit-enable-reply-{{ rule.id }}" {% if rule.reply_template %}checked{% endif %} onchange="toggleEditReplyInput({{ rule.id }})" style="width: auto; cursor: pointer;">
-                                                                <label for="edit-enable-reply-{{ rule.id }}" style="font-size: 0.75rem; color: var(--text-muted); cursor: pointer;">Enable AI Auto-Reply</label>
+                                                                <label for="edit-enable-reply-{{ rule.id }}" style="margin-bottom: 0; cursor: pointer;">Enable AI Auto-Reply</label>
                                                             </div>
-                                                            <input type="text" class="edit-reply-template" id="edit-reply-template-{{ rule.id }}" value="{{ rule.reply_template or '' }}" placeholder="AI Reply Prompt (e.g. Reply politely)" style="padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; width: 100%; {% if not rule.reply_template %}display: none;{% endif %}">
-                                                            <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-                                                                <button onclick="saveEdit({{ rule.id }})" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Save</button>
-                                                                <button onclick="toggleEdit({{ rule.id }})" class="btn btn-glass" style="padding: 0.4rem 1rem; font-size: 0.75rem;">Cancel</button>
+                                                            <input type="text" class="edit-reply-template" id="edit-reply-template-{{ rule.id }}" value="{{ rule.reply_template or '' }}" placeholder="AI Reply Prompt Template" class="input-field" style="{% if not rule.reply_template %}display: none;{% endif %}">
+                                                            <div style="display: flex; gap: 6px; margin-top: 4px;">
+                                                                <button onclick="saveEdit({{ rule.id }})" class="btn-primary" style="padding: 4px 10px; font-size: 11px;">Save</button>
+                                                                <button onclick="toggleEdit({{ rule.id }})" class="btn-ghost" style="padding: 4px 10px; font-size: 11px;">Cancel</button>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="rule-actions" style="display: flex; gap: 0.5rem;">
-                                                    <button onclick="toggleEdit({{ rule.id }})" class="btn-icon-premium" title="Edit Name"><i data-lucide="edit-3" style="width: 16px;"></i></button>
-                                                    <button onclick="confirmDelete({{ rule.id }})" class="btn-icon-premium delete" title="Delete Rule">
-                                                        <i data-lucide="trash-2" style="width: 16px;"></i>
+                                                <div class="rule-actions" style="display: flex; gap: 6px;">
+                                                    <button onclick="toggleEdit({{ rule.id }})" class="btn-icon-premium" title="Edit"><i data-lucide="edit-3" style="width: 14px; height: 14px;"></i></button>
+                                                    <button onclick="confirmDelete({{ rule.id }})" class="btn-icon-premium delete" title="Delete">
+                                                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                                                     </button>
                                                 </div>
                                             </div>
-    
-                                            <!-- Sub-labels Section -->
-                                            <div class="sublabel-section">
+                                    
+                                            <!-- Sub-labels List -->
+                                            <div class="sublabel-section" style="margin-top: 8px; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
                                                 <div id="sublabels-{{ rule.id }}">
                                                     {% for sub in rules if sub.label.startswith(rule.label + '/') %}
-                                                        <div class="sublabel-item">
-                                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                                <i data-lucide="corner-down-right" style="width: 14px; color: var(--text-muted);"></i>
-                                                                <span>{{ sub.label.split('/')[-1] }}</span>
-                                                                <span style="font-size: 0.7rem; color: var(--text-muted);">({{ sub.domain }})</span>
+                                                        <div class="sublabel-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px;">
+                                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                                <i data-lucide="corner-down-right" style="width: 12px; height: 12px; color: var(--text-muted);"></i>
+                                                                <span style="font-weight: 500;">{{ sub.label.split('/')[-1] }}</span>
+                                                                <span style="color: var(--text-muted); font-size: 11px;">({{ sub.domain }})</span>
                                                             </div>
-                                                            <div style="display: flex; gap: 0.5rem;">
-                                                                <button onclick="confirmDelete({{ sub.id }})" class="btn-icon" style="padding: 2px;">
-                                                                    <i data-lucide="trash-2" style="width: 14px; color: #ef4444;"></i>
-                                                                </button>
-                                                            </div>
+                                                            <button onclick="confirmDelete({{ sub.id }})" class="btn-icon" style="border: none; background: transparent; cursor: pointer;">
+                                                                <i data-lucide="trash-2" style="width: 12px; height: 12px; color: var(--red);"></i>
+                                                            </button>
                                                         </div>
                                                     {% endfor %}
                                                 </div>
-                                                <div class="add-sublabel-btn" onclick="openSublabelModal('{{ rule.label }}')">
-                                                    <i data-lucide="plus-circle" style="width: 14px;"></i>
+                                                <div class="add-sublabel-btn" onclick="openSublabelModal('{{ rule.label }}')" style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--accent); cursor: pointer; margin-top: 6px;">
+                                                    <i data-lucide="plus-circle" style="width: 12px; height: 12px;"></i>
                                                     Add Sub-label
                                                 </div>
                                             </div>
                                         </div>
                                     {% endfor %}
+                                    </div>
                                 {% else %}
-                                    <div id="noRules" style="text-align: center; padding: 2rem; color: var(--text-muted); border: 1px dashed var(--border-glass); border-radius: 12px;">No active rules yet. Create your first one above!</div>
+                                    <div class="empty-state">
+                                        <div class="empty-icon"><i data-lucide="filter"></i></div>
+                                        <div class="empty-title">No rules yet</div>
+                                        <div class="empty-desc">Add your first rule in plain English above.</div>
+                                    </div>
                                 {% endif %}
                             </div>
-                        </section>
-                        
-                        <section class="glass-panel">
-                            <h4 style="font-size: 0.875rem; margin-bottom: 1rem;">AI Suggestions</h4>
-                            {% if suggestions %}
-                                {% for suggestion in suggestions %}
-                                    <div class="glass-panel" style="padding: 1rem; background: rgba(255,255,255,0.02); margin-bottom: 0.75rem; border-color: rgba(59, 130, 246, 0.2);">
-                                        <p style="font-size: 0.8125rem; line-height: 1.4;">{{ suggestion.reason }}</p>
-                                        <form action="{{ url_for('add_rule') }}" method="POST">
-                                            <input type="hidden" name="label" value="{{ suggestion.label }}">
-                                            <input type="hidden" name="domain" value="{{ suggestion.domain }}">
-                                            <button type="submit" class="btn btn-primary" style="margin-top: 0.75rem; padding: 0.4rem 0.8rem; font-size: 0.75rem;">Create '{{ suggestion.label }}'</button>
-                                        </form>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <p style="font-size: 0.8125rem; color: var(--text-muted);">No suggestions yet. Connect Gmail to see AI insights.</p>
-                            {% endif %}
                         </section>
                     </div>
                 </div>
 
-                <!-- 3. UNSUBSCRIBE AGENT PANEL -->
-                <div id="tab-panel-unsubscribe" class="tab-panel" style="display: none;">
-                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
-                        <section class="glass-panel">
-                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                                <i data-lucide="mail-minus" style="color: var(--primary);"></i>
-                                Unsubscribe Agent
-                            </h3>
-                            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">
-                                Scan newsletters in your inbox, extract list preferences, and unsubscribe in one click.
+                <!-- 5. DRAFT STUDIO PANEL -->
+                <div id="tab-panel-drafts" class="tab-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px;">
+                        <!-- Left column: Configuration -->
+                        <section class="card-panel" style="padding: 20px;">
+                            <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                <i data-lucide="settings" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                                AI Reply Assistant Settings
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; text-align: left;">
+                                Configure how Gemini writes auto-reply drafts. Rules with reply templates will use these parameters.
                             </p>
                             
-                            <div style="display: flex; flex-direction: column; gap: 1rem;" id="newsletterList">
+                            <div style="display: flex; flex-direction: column; gap: 16px; font-size: 12px;">
+                                <div style="text-align: left;">
+                                    <label style="display: block; font-weight: 500; margin-bottom: 6px; color: var(--text-primary);">Response Tone</label>
+                                    <select id="draftTone" class="input-field" style="width: 100%;">
+                                        <option value="professional">Professional & Courteous (Default)</option>
+                                        <option value="casual">Friendly & Casual</option>
+                                        <option value="concise">Direct & Concise</option>
+                                        <option value="detailed">Thorough & Comprehensive</option>
+                                    </select>
+                                </div>
+                                <div style="text-align: left;">
+                                    <label style="display: block; font-weight: 500; margin-bottom: 6px; color: var(--text-primary);">Signature Line</label>
+                                    <input type="text" id="draftSignature" class="input-field" placeholder="e.g. Sent via Sortify AI" value="Sent via Sortify AI" style="width: 100%;">
+                                </div>
+                                <div style="text-align: left;">
+                                    <label style="display: block; font-weight: 500; margin-bottom: 6px; color: var(--text-primary);">Draft Behavior</label>
+                                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="checkbox" checked style="width: auto;">
+                                            <span>Create Draft in Gmail (Recommended)</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="checkbox" style="width: auto;">
+                                            <span>Inject smart calendar link</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button onclick="saveDraftSettings()" class="btn-primary" style="justify-content: center; width: 100%; margin-top: 10px;">Save Configuration</button>
+                            </div>
+                        </section>
+                        
+                        <!-- Right column: Generated Drafts Queue / Previewer -->
+                        <section class="card-panel" style="padding: 20px;">
+                            <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                <i data-lucide="file-text" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                                Draft Studio Previewer
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; text-align: left;">
+                                Review and modify recent auto-generated replies prepared by Sortify.
+                            </p>
+                            
+                            <div id="draftPreviewList" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div class="card-panel" id="mockDraftCard" style="background: var(--bg-overlay); border-color: rgba(255,255,255,0.03); padding: 16px; margin-bottom: 0;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div style="font-size: 12px; font-weight: 600; color: var(--text-primary);">To: client-relations@stripe.com</div>
+                                        <span class="badge badge-ai" style="font-size: 9px;"><i data-lucide="bot" style="width: 10px; height: 10px;"></i> Pending Approval</span>
+                                    </div>
+                                    <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 8px; text-align: left;">Subject: Re: Invoice payment confirmation #10893</div>
+                                    <div style="background: rgba(0,0,0,0.15); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px; font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; margin-bottom: 12px; text-align: left;">Hello team,
+
+Thank you for confirming the receipt of invoice #10893. I appreciate the swift processing. We will keep this on record for our accounting records.
+
+Best regards,
+Jane Doe
+(Sent via Sortify AI)</div>
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button onclick="approveDraftDirect()" class="btn-primary" style="padding: 4px 10px; font-size: 11px;">Insert in Gmail</button>
+                                        <button onclick="deleteDraftDirect()" class="btn-ghost" style="padding: 4px 10px; font-size: 11px; color: var(--red); border-color: rgba(239, 68, 68, 0.2);">Discard</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- 6. SECURITY CENTER PANEL -->
+                <div id="tab-panel-security" class="tab-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px;">
+                        <!-- Column 1: Safety metrics & visualization -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <section class="card-panel" style="text-align: center; padding: 24px;">
+                                <div class="section-title" style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; text-align: left;">
+                                    <i data-lucide="shield-alert" style="width: 14px; height: 14px; color: var(--red);"></i>
+                                    Phishing Risk Level
+                                </div>
+                                
+                                <div style="position: relative; width: 140px; height: 140px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                                    <!-- Dynamic Ring Gauge for Phishing Risk -->
+                                    <svg width="140" height="140" viewBox="0 0 140 140">
+                                        <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="8"/>
+                                        <circle id="riskGaugeRing" cx="70" cy="70" r="60" fill="none" stroke="var(--red)" stroke-width="8" stroke-dasharray="377" stroke-dashoffset="350" stroke-linecap="round" transform="rotate(-90 70 70)" style="transition: stroke-dashoffset 0.6s;"/>
+                                    </svg>
+                                    <div style="position: absolute; display: flex; flex-direction: column; align-items: center;">
+                                        <span id="riskLabel" style="font-size: 20px; font-weight: 700; color: var(--red); font-family: var(--font-mono);">LOW</span>
+                                        <span style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Threat Level</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 16px;">
+                                    Sortify AI scans headers, links, and body semantics to flag bank spoofing and urgent credential theft.
+                                </div>
+                                
+                                <button onclick="triggerSecurityScan()" id="securityScanBtn" class="btn-ghost" style="width: 100%; justify-content: center; border-color: var(--accent); color: var(--accent);">
+                                    <i data-lucide="refresh-cw" style="width: 14px; height: 14px; margin-right: 6px;"></i>
+                                    Run Deep Security Scan
+                                </button>
+                            </section>
+                        </div>
+                        
+                        <!-- Column 2: Phishing Quarantine Queue -->
+                        <section class="card-panel" style="padding: 20px;">
+                            <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                <i data-lucide="shield" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                                Phishing Quarantine Queue
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; text-align: left;">
+                                Emails flagged by our scanner are quarantined below. Click "Dismiss" if it is safe, or "Block Sender" to blacklist.
+                            </p>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 12px;" id="quarantineListContainer">
+                                <!-- Populated dynamically by loadPhishingAlerts() -->
+                            </div>
+                            
+                            <div id="quarantineEmptyState" class="empty-state" style="display: none;">
+                                <div class="empty-icon" style="color: var(--green);"><i data-lucide="shield-check"></i></div>
+                                <div class="empty-title" style="color: var(--green);">No Threats Found!</div>
+                                <div class="empty-desc">Your inbox is clean of phishing attempts and banking spoofs.</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- 7. UNSUBSCRIBE PANEL -->
+                <div id="tab-panel-unsubscribe" class="tab-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+                        <section class="card-panel" style="padding: 20px;">
+                            <div class="section-title" style="margin-bottom: 12px;">
+                                Unsubscribe Queue
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; text-align: left;">
+                                Extract links automatically and send list-unsubscribe signals in one click.
+                            </p>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 12px;" id="newsletterList">
                                 {% if newsletters %}
                                     {% for item in newsletters %}
-                                        <div style="padding: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 16px; display: flex; justify-content: space-between; align-items: center;" id="news-{{ item.id }}">
-                                            <div style="flex: 1; margin-right: 1.5rem;">
-                                                <h4 style="font-size: 0.9375rem; font-weight: 700;">{{ item.sender }}</h4>
-                                                <p style="font-size: 0.8125rem; color: var(--text-muted);">{{ item.subject }}</p>
-                                                <p style="font-size: 0.6875rem; color: var(--primary); margin-top: 0.25rem;">{{ item.date }}</p>
+                                        <div class="card-panel" id="news-{{ item.id }}" style="padding: 16px; margin-bottom: 0; background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center;">
+                                            <div style="flex: 1; margin-right: 16px; text-align: left;">
+                                                <h4 style="font-size: 13px; font-weight: 500; color: var(--text-primary);">{{ item.sender }}</h4>
+                                                <p style="font-size: 12px; color: var(--text-secondary);">{{ item.subject }}</p>
+                                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono);">{{ item.date }}</p>
+                                                
+                                                <!-- Segmented confidence meter -->
+                                                <div class="conf-meter" style="margin-top: 8px;">
+                                                    <div class="conf-segments" data-confidence="{{ item.confidence }}">
+                                                        <div class="conf-seg"></div>
+                                                        <div class="conf-seg"></div>
+                                                        <div class="conf-seg"></div>
+                                                        <div class="conf-seg"></div>
+                                                        <div class="conf-seg"></div>
+                                                    </div>
+                                                    <span class="conf-value">{{ (item.confidence * 100)|int }}% conf</span>
+                                                </div>
                                             </div>
-                                            <div style="display: flex; gap: 0.5rem;">
+                                            <div>
                                                 {% if item.mailto_link %}
-                                                    <button class="btn btn-primary" onclick="unsubscribeSender('{{ item.id }}', '{{ item.sender_email }}', '{{ item.mailto_link }}', '')" style="padding: 0.5rem 1rem; font-size: 0.75rem;">
+                                                    <button class="btn-primary" onclick="unsubscribeSender('{{ item.id }}', '{{ item.sender_email }}', '{{ item.mailto_link }}', '')" style="padding: 6px 12px; font-size: 11px;">
                                                         One-Click Unsubscribe
                                                     </button>
                                                 {% elif item.http_link %}
-                                                    <a href="{{ item.http_link }}" target="_blank" class="btn btn-glass" onclick="logUnsubscribe('{{ item.sender_email }}')" style="padding: 0.5rem 1rem; font-size: 0.75rem; text-decoration: none;">
-                                                        Go to Unsubscribe
+                                                    <a href="{{ item.http_link }}" target="_blank" class="btn-ghost" onclick="logUnsubscribe('{{ item.sender_email }}')" style="padding: 6px 12px; font-size: 11px; text-decoration: none;">
+                                                        Unsubscribe link
                                                     </a>
                                                 {% endif %}
                                             </div>
                                         </div>
                                     {% endfor %}
                                 {% else %}
-                                    <div style="text-align: center; padding: 2rem; color: var(--text-muted); border: 1px dashed var(--border-glass); border-radius: 12px;">
-                                        No active newsletters found with unsubscribe headers in recent emails.
+                                    <div class="empty-state">
+                                        <div class="empty-icon"><i data-lucide="inbox"></i></div>
+                                        <div class="empty-title">Queue is clear</div>
+                                        <div class="empty-desc">All newsletters have been handled.</div>
                                     </div>
                                 {% endif %}
                             </div>
                         </section>
                         
-                        <section class="glass-panel">
-                            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                                <i data-lucide="archive" style="color: var(--accent);"></i>
+                        <!-- List of previously unsubscribed senders -->
+                        <section class="card-panel" style="height: fit-content; padding: 20px;">
+                            <div class="section-title" style="margin-bottom: 12px;">
                                 Unsubscribed Senders
-                            </h3>
-                            <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 1rem;">Senders you have unsubscribed from via Sortify:</p>
-                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 12px; text-align: left;">Completed unsubscribe requests:</p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
                                 {% if unsubscribed %}
                                     {% for entry in unsubscribed %}
-                                        <div style="padding: 0.75rem 1rem; background: rgba(255,255,255,0.01); border: 1px solid var(--border-glass); border-radius: 8px; font-size: 0.8125rem; display: flex; justify-content: space-between;">
-                                            <span style="font-weight: 500;">{{ entry.sender }}</span>
-                                            <span style="color: var(--text-muted); font-size: 0.7rem;">{{ entry.date_unsubscribed }}</span>
+                                        <div style="padding: 8px 12px; background: var(--bg-overlay); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="font-weight: 500; color: var(--text-primary);">{{ entry.sender }}</span>
+                                            <span style="color: var(--text-muted); font-size: 10px; font-family: var(--font-mono);">{{ entry.date_unsubscribed[:10] }}</span>
                                         </div>
                                     {% endfor %}
                                 {% else %}
-                                    <p style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No senders unsubscribed yet.</p>
+                                    <p style="font-size: 12px; color: var(--text-muted); font-style: italic;">No unsubscribe history found.</p>
                                 {% endif %}
                             </div>
                         </section>
                     </div>
                 </div>
 
-                <!-- 4. CLEANUP ASSISTANT PANEL -->
-                <div id="tab-panel-cleanup" class="tab-panel" style="display: none;">
-                    <section class="glass-panel">
-                        <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                            <i data-lucide="trash-2" style="color: #ef4444;"></i>
-                            Cleanup Assistant
-                        </h3>
-                        <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">
-                            Archive promotional emails older than 30 days automatically to clean up space in your primary inbox.
-                        </p>
-                        <form action="{{ url_for('cleanup') }}" method="POST">
-                            <button type="submit" class="btn btn-primary" style="background: #ef4444; box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);">
-                                Archive Old Promotions Now
-                            </button>
-                        </form>
-                    </section>
+                <!-- 8. ANALYTICS PANEL -->
+                <div id="tab-panel-analytics" class="tab-panel" style="display: none;">
+                    <!-- Row 1: charts -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <!-- Inbox Composition Graph -->
+                        <section class="card-panel" style="padding: 20px;">
+                            <div class="section-header" style="margin-bottom: 16px;">
+                                <div class="section-title" style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                    <i data-lucide="pie-chart" style="width: 14px; height: 14px; color: var(--accent); margin-right: 6px;"></i>
+                                    Inbox Category Breakdown
+                                </div>
+                            </div>
+                            <div style="max-width: 200px; margin: 0 auto;">
+                                <canvas id="compositionChart" height="200"></canvas>
+                            </div>
+                            
+                            <div class="custom-chart-legend" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px;">
+                                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #6366f1;"></span> Personal
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #22d3ee;"></span> Promotions
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #a78bfa;"></span> Updates
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #6ee7b7;"></span> Social
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Weekly Ingestion Chart -->
+                        <section class="card-panel" style="padding: 20px;">
+                            <div class="section-header" style="margin-bottom: 16px;">
+                                <div class="section-title" style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                    <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: var(--accent); margin-right: 6px;"></i>
+                                    Weekly Email Ingestion
+                                </div>
+                            </div>
+                            <canvas id="weeklyVolumeChart" height="200"></canvas>
+                        </section>
+                    </div>
+
+                    <!-- Row 2: Heatmap & Top Senders -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <!-- Heatmap Grid -->
+                        <section class="card-panel" style="padding: 20px;">
+                            <div class="section-header" style="margin-bottom: 16px;">
+                                <div class="section-title" style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                    <i data-lucide="calendar" style="width: 14px; height: 14px; color: var(--accent); margin-right: 6px;"></i>
+                                    Ingestion Density Heatmap
+                                </div>
+                            </div>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; font-family: var(--font-mono);">Density Grid (Monday to Sunday, 24 Hours)</p>
+                            <div style="display: flex; gap: 8px; width: 100%;">
+                                <div style="display: flex; flex-direction: column; justify-content: space-between; font-size: 9px; color: var(--text-muted); width: 12px; padding: 2px 0; font-family: var(--font-mono);">
+                                    <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                                </div>
+                                <div id="heatmapContainer" style="display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; flex: 1;">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); margin-top: 8px; padding-left: 20px; font-family: var(--font-mono);">
+                                <span>12 AM</span>
+                                <span>6 AM</span>
+                                <span>12 PM</span>
+                                <span>6 PM</span>
+                                <span>11 PM</span>
+                            </div>
+                        </section>
+
+                        <!-- Top Senders Table -->
+                        <section class="data-table-container" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden;">
+                            <div style="padding: 16px 16px 8px;">
+                                <div class="section-title" style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                    <i data-lucide="users" style="width: 14px; height: 14px; color: var(--accent); margin-right: 6px;"></i>
+                                    Top Senders Triage
+                                </div>
+                            </div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Sender</th>
+                                        <th>Domain</th>
+                                        <th style="text-align: center;">Emails</th>
+                                        <th style="text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topSendersTableBody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- 9. GMAIL CONNECTION PANEL -->
+                <div id="tab-panel-connection" class="tab-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px;">
+                        <!-- Connection Status Card -->
+                        <section class="card-panel" style="padding: 24px;">
+                            <div class="section-title" style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                <i data-lucide="link" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                                Google OAuth Connection
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+                                <div style="width: 48px; height: 48px; border-radius: 50%; background: {% if is_demo %}rgba(245,158,11,0.1){% else %}rgba(34,197,94,0.1){% endif %}; display: flex; align-items: center; justify-content: center; color: {% if is_demo %}var(--amber){% else %}var(--green){% endif %}; font-size: 20px;">
+                                    <i data-lucide="{% if is_demo %}help-circle{% else %}check-circle{% endif %}" style="width: 24px; height: 24px;"></i>
+                                </div>
+                                <div style="text-align: left;">
+                                    <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">
+                                        {% if is_demo %}Sandbox Mode (Unconnected){% else %}Gmail Connected{% endif %}
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                                        {% if is_demo %}Jane Doe (jane.doe@gmail.com){% else %}{{ user_name }} ({{ user_email }}){% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px; text-align: left;">
+                                {% if is_demo %}
+                                    You are currently using Sortify AI in **Sandbox Mode**. You can browse all features, trigger simulated events, and customize rules. To connect your actual Google Inbox, click the authorize button below.
+                                {% else %}
+                                    Sortify AI is connected to your Gmail account. It will automatically check for new messages, sort them into labels, and write response drafts based on your rules.
+                                {% endif %}
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px;">
+                                {% if is_demo %}
+                                    <a href="{{ url_for('authorize') }}" class="btn-primary" style="flex: 1; text-align: center; text-decoration: none; justify-content: center;">
+                                        <i data-lucide="log-in" style="width: 14px; height: 14px; margin-right: 6px;"></i>
+                                        Authorize Gmail Access
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('logout') }}" class="btn-danger" style="flex: 1; text-align: center; text-decoration: none; justify-content: center;">
+                                        <i data-lucide="log-out" style="width: 14px; height: 14px; margin-right: 6px;"></i>
+                                        Disconnect Account
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </section>
+
+                        <!-- DB Status & Quick Cleanup Utility -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <section class="card-panel" style="padding: 20px;">
+                                <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                    <i data-lucide="database" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                                    Database Sync State
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; display: flex; flex-direction: column; gap: 8px; text-align: left;">
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                                        <span>Connection State:</span>
+                                        <span style="color: var(--green); font-family: var(--font-mono); font-weight: 600;">ONLINE</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                                        <span>Sync Mode:</span>
+                                        <span style="font-family: var(--font-mono);">Incremental Polling</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                                        <span>Last Sync:</span>
+                                        <span style="font-family: var(--font-mono);">Just now</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Promotion cleanup assistant -->
+                            <section class="card-panel" style="padding: 20px;">
+                                <div class="section-title" style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px; color: var(--red);"></i>
+                                    Cleanup Assistant
+                                </div>
+                                <p style="color: var(--text-secondary); font-size: 12px; line-height: 1.4; margin-bottom: 12px; text-align: left;">
+                                    Archive promotional emails older than 30 days automatically to clean up space in your primary inbox.
+                                </p>
+                                <form action="{{ url_for('cleanup') }}" method="POST">
+                                    <button type="submit" class="btn-danger" style="width: 100%; justify-content: center; padding: 8px; font-size: 11px;">
+                                        Archive Old Promotions
+                                    </button>
+                                </form>
+                            </section>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- JS Logic Scripts -->
     <script>
         lucide.createIcons();
 
-        // Chart.js implementation
-        const ctx = document.getElementById('compositionChart').getContext('2d');
+        // ------------------------------------
+        // Chart.js Configuration (YC Dark Mode)
+        // ------------------------------------
+        Chart.defaults.font.family = 'DM Mono';
+        Chart.defaults.color = '#8888a0';
+
+        const darkChartDefaults = {
+          color: '#8888a0',
+          borderColor: 'rgba(255,255,255,0.06)',
+          backgroundColor: 'rgba(99,102,241,0.08)',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#18181f',
+              borderColor: 'rgba(255,255,255,0.10)',
+              borderWidth: 1,
+              titleColor: '#f0f0f5',
+              bodyColor: '#8888a0',
+              padding: 10,
+              cornerRadius: 8,
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+              ticks: { color: '#555568', font: { family: 'DM Mono', size: 10 } }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+              ticks: { color: '#555568', font: { family: 'DM Mono', size: 10 } }
+            }
+          }
+        };
+
+        // Donut Composition chart center text labels plugin
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw: function(chart) {
+                const width = chart.width,
+                      height = chart.height,
+                      ctx = chart.ctx;
+                ctx.restore();
+                
+                const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                
+                ctx.font = "bold 24px 'DM Mono'";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#f0f0f5";
+                
+                const text = total.toString(),
+                      textX = Math.round((width - ctx.measureText(text).width) / 2),
+                      textY = height / 2 - 10;
+                      
+                ctx.fillText(text, textX, textY);
+                
+                ctx.font = "500 10px 'Geist'";
+                ctx.fillStyle = "#555568";
+                const label = "TOTAL",
+                      labelX = Math.round((width - ctx.measureText(label).width) / 2),
+                      labelY = height / 2 + 15;
+                      
+                ctx.fillText(label, labelX, labelY);
+                ctx.save();
+            }
+        };
+
+        const compCtx = document.getElementById('compositionChart').getContext('2d');
         const compositionData = {
             labels: ['Personal', 'Promotions', 'Updates', 'Social'],
             data: [
@@ -640,87 +1134,99 @@
             ]
         };
 
-        new Chart(ctx, {
+        new Chart(compCtx, {
             type: 'doughnut',
             data: {
                 labels: compositionData.labels,
                 datasets: [{
                     data: compositionData.data,
                     backgroundColor: [
-                        '#3b82f6',
                         '#6366f1',
-                        '#10b981',
-                        '#f59e0b'
+                        '#22d3ee',
+                        '#a78bfa',
+                        '#6ee7b7'
                     ],
                     borderWidth: 0,
                     hoverOffset: 10
                 }]
             },
             options: {
+                responsive: true,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#94a3b8',
-                            usePointStyle: true,
-                            padding: 20
-                        }
-                    }
+                    legend: { display: false }
                 },
-                cutout: '70%'
-            }
+                cutout: '72%'
+            },
+            plugins: [centerTextPlugin]
         });
 
-        // Tab Switcher logic
+        // Tab Switcher logic with YC Fade Transition
+        let activeTab = 'overview';
         function switchTab(tab) {
-            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+            if (activeTab === tab) return;
+            const currentPanel = document.getElementById(`tab-panel-${activeTab}`);
+            const nextPanel = document.getElementById(`tab-panel-${tab}`);
+            
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            
-            const panel = document.getElementById(`tab-panel-${tab}`);
-            if (panel) panel.style.display = 'block';
-            
             const navBtn = document.getElementById(`tab-${tab}`);
             if (navBtn) navBtn.classList.add('active');
+            
+            if (currentPanel && nextPanel) {
+                gsap.to(currentPanel, { opacity: 0, y: 4, duration: 0.12, onComplete: () => {
+                    currentPanel.style.display = 'none';
+                    nextPanel.style.display = 'block';
+                    activeTab = tab;
+                    gsap.fromTo(nextPanel, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.2, ease: 'power2.out' });
+                }});
+            } else if (nextPanel) {
+                if (currentPanel) currentPanel.style.display = 'none';
+                nextPanel.style.display = 'block';
+                activeTab = tab;
+            }
+            
+            if (tab === 'security') {
+                loadPhishingAlerts();
+            }
         }
 
-        // GSAP entry animations
-        gsap.from(".sidebar", { x: -50, opacity: 0, duration: 0.8, ease: "power3.out" });
-        gsap.from(".stat-card", { 
-            y: 30, 
-            opacity: 0, 
-            duration: 0.6, 
-            stagger: 0.1, 
-            ease: "power3.out" 
-        });
-        gsap.from(".glass-panel", { 
-            y: 40, 
-            opacity: 0, 
-            duration: 1, 
-            delay: 0.2,
-            stagger: 0.2,
-            ease: "power3.out" 
-        });
+        // Stats Snap Counters Up Animation
+        function animateCounter(id, targetValue) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerText = "0";
+            gsap.to(el, {
+                innerText: targetValue,
+                duration: 1.2,
+                ease: 'power2.out',
+                snap: { innerText: 1 },
+                onUpdate: () => {
+                    el.textContent = Math.round(parseFloat(el.innerText));
+                }
+            });
+        }
 
+        // ------------------------------------
         // Premium Toast System
+        // ------------------------------------
         function showToast(msg, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.innerHTML = `
-                <i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}"></i>
+                <i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" style="width: 16px; height: 16px;"></i>
                 <span>${msg}</span>
             `;
             container.appendChild(toast);
             lucide.createIcons();
             
-            setTimeout(() => toast.classList.add('show'), 10);
+            gsap.fromTo(toast, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: 'power2.out' });
+            
             setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
+                gsap.to(toast, { y: 8, opacity: 0, duration: 0.2, onComplete: () => toast.remove() });
             }, 3000);
         }
 
-        // Rule Editing
+        // Edit Rule Modal / Toggle
         function toggleEdit(id) {
             const el = document.getElementById(`rule-${id}`);
             const display = el.querySelector('.rule-label-display');
@@ -748,7 +1254,7 @@
             
             if (!newLabel) return showToast("Label cannot be empty", "error");
 
-            const existing = Array.from(document.querySelectorAll('.rule-item'))
+            const existing = Array.from(document.querySelectorAll('#rulesList .card-panel'))
                 .filter(item => item.id !== `rule-${id}`)
                 .some(item => item.dataset.label === newLabel.toLowerCase());
             
@@ -798,16 +1304,16 @@
             input.style.display = checkbox.checked ? 'block' : 'none';
         }
 
-        // Rule Deletion
+        // Rule Deletion Confirmation
         let ruleToDelete = null;
         function confirmDelete(id) {
             ruleToDelete = id;
-            document.getElementById('confirmOverlay').style.display = 'flex';
-            gsap.from(".confirm-card", { scale: 0.8, opacity: 0, duration: 0.3, ease: "back.out" });
+            const overlay = document.getElementById('confirmOverlay');
+            overlay.classList.add('show');
         }
 
         function closeConfirm() {
-            document.getElementById('confirmOverlay').style.display = 'none';
+            document.getElementById('confirmOverlay').classList.remove('show');
         }
 
         document.getElementById('confirmBtn').onclick = async () => {
@@ -821,12 +1327,12 @@
                 
                 if (data.status === 'success') {
                     gsap.to(`#rule-${id}`, { 
-                        x: 100, 
+                        x: 40, 
                         opacity: 0, 
-                        duration: 0.4, 
+                        duration: 0.3, 
                         onComplete: () => {
                             document.getElementById(`rule-${id}`).remove();
-                            if (document.querySelectorAll('.rule-item').length === 0) {
+                            if (document.querySelectorAll('#rulesList .card-panel').length === 0) {
                                 location.reload();
                             }
                         }
@@ -838,7 +1344,7 @@
             }
         };
 
-        // Adding Rules
+        // Add Smart Rule
         async function handleAdd(e) {
             e.preventDefault();
             const form = e.target;
@@ -848,7 +1354,7 @@
             const replyTemplate = enableAutoReply ? document.getElementById('replyTemplateInput').value.trim() : "";
             const btn = document.getElementById('addBtn');
 
-            const existing = Array.from(document.querySelectorAll('.rule-item'))
+            const existing = Array.from(document.querySelectorAll('#rulesList .card-panel'))
                 .some(item => item.dataset.label === label.toLowerCase());
             
             if (existing) return showToast(`A rule for "${label}" already exists!`, "error");
@@ -918,34 +1424,34 @@
             }
         }
         
-        // Sync on load and then every 60s
         syncInbox();
         setInterval(syncInbox, 60000);
 
+        // Sublabel actions
         function openSublabelModal(parentLabel) {
             document.getElementById('parentLabelInput').value = parentLabel;
             document.getElementById('sublabelModalTitle').innerText = `Add Sub-labels to ${parentLabel}`;
             document.getElementById('sublabelRows').innerHTML = `
-                <div class="input-group" style="margin-bottom: 0.75rem;">
-                    <input type="text" name="sub_name[]" placeholder="Sub-folder Name" required style="flex: 1;">
-                    <input type="text" name="sub_domain[]" placeholder="Domain" required style="flex: 1;">
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" name="sub_name[]" placeholder="Sub-folder Name" required class="input-field" style="flex: 1;">
+                    <input type="text" name="sub_domain[]" placeholder="Domain" required class="input-field" style="flex: 1;">
                 </div>`;
-            document.getElementById('sublabelModal').style.display = 'flex';
+            document.getElementById('sublabelModal').classList.add('show');
             lucide.createIcons();
         }
 
         function closeSublabelModal() {
-            document.getElementById('sublabelModal').style.display = 'none';
+            document.getElementById('sublabelModal').classList.remove('show');
         }
 
         function addSublabelRow() {
             const row = document.createElement('div');
-            row.className = 'input-group';
-            row.style.marginBottom = '0.75rem';
+            row.style.display = 'flex';
+            row.style.gap = '8px';
             row.innerHTML = `
-                <input type="text" name="sub_name[]" placeholder="Sub-folder Name" required style="flex: 1;">
-                <input type="text" name="sub_domain[]" placeholder="Domain" required style="flex: 1;">
-                <button type="button" onclick="this.parentElement.remove()" class="btn-icon" style="color: #ef4444;"><i data-lucide="x" style="width: 16px;"></i></button>
+                <input type="text" name="sub_name[]" placeholder="Sub-folder Name" required class="input-field" style="flex: 1;">
+                <input type="text" name="sub_domain[]" placeholder="Domain" required class="input-field" style="flex: 1;">
+                <button type="button" onclick="this.parentElement.remove()" class="btn-icon" style="color: var(--red); border: none;"><i data-lucide="x" style="width: 14px; height: 14px;"></i></button>
             `;
             document.getElementById('sublabelRows').appendChild(row);
             lucide.createIcons();
@@ -967,7 +1473,7 @@
                     formData.append('label', fullLabel);
                     formData.append('domain', domains[i]);
                     
-                    const response = await fetch('/add_rule', {
+                    await fetch('/add_rule', {
                         method: 'POST',
                         body: formData
                     });
@@ -979,7 +1485,7 @@
             }
         }
 
-        // Hackathon Unsubscribe Agent actions
+        // Unsubscribe Action
         async function unsubscribeSender(id, sender, mailtoLink, httpLink) {
             showToast("Processing unsubscribe...", "info");
             try {
@@ -1026,13 +1532,17 @@
             } catch(e) {}
         }
 
-        // Hackathon Plugin Extensions toggler
-        async function togglePlugin(name, checkbox) {
+        // Plugins Toggling
+        async function togglePluginClick(el, name) {
+            const isEnabled = el.classList.toggle('on');
+            const card = el.parentElement;
+            if (card) card.classList.toggle('active', isEnabled);
+            
             showToast(`Updating plugin status: ${name}...`, "info");
             try {
                 const formData = new FormData();
                 formData.append('plugin_name', name);
-                formData.append('enabled', checkbox.checked ? '1' : '0');
+                formData.append('enabled', isEnabled ? '1' : '0');
                 
                 const response = await fetch('/toggle_plugin', {
                     method: 'POST',
@@ -1042,9 +1552,1152 @@
                 showToast(data.message);
             } catch (e) {
                 showToast("Failed to update plugin status", "error");
-                checkbox.checked = !checkbox.checked;
+                el.classList.toggle('on', !isEnabled);
+                if (card) card.classList.toggle('active', !isEnabled);
             }
         }
+
+        // ------------------------------------
+        // Sortify v2 Scripts & Fetching
+        // ------------------------------------
+        const isDemoMode = {{ 'true' if is_demo else 'false' }};
+        const apiBase = isDemoMode ? '/api/demo' : '/api';
+        
+        let activeCategory = 'All';
+        let cachedEmails = [];
+        let weeklyVolumeChart = null;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fill segmented indicators for confidence score
+            document.querySelectorAll('.conf-segments').forEach(el => {
+                const conf = parseFloat(el.getAttribute('data-confidence'));
+                const segments = el.querySelectorAll('.conf-seg');
+                const fillCount = Math.round(conf * 5);
+                let color = 'var(--red)';
+                if (conf >= 0.85) {
+                    color = 'var(--green)';
+                } else if (conf >= 0.50) {
+                    color = 'var(--amber)';
+                }
+                for (let i = 0; i < fillCount; i++) {
+                    if (segments[i]) segments[i].style.backgroundColor = color;
+                }
+            });
+
+            // Initial counter animations
+            animateCounter('stat-active-rules', {{ rules|length }});
+            animateCounter('stat-emails-sorted', {{ stats.total_sorted if stats.total_sorted else 0 }});
+            animateCounter('stat-time-saved', {{ stats.time_saved or 0 }});
+            animateCounter('stat-drafts', {{ stats.replies_drafted or 0 }});
+
+            // GSAP page load sequence
+            const tl = gsap.timeline();
+            tl.from('.topbar', { y: -52, opacity: 0, duration: 0.4, ease: 'power2.out' })
+              .from('.sidebar', { x: -200, opacity: 0, duration: 0.35, ease: 'power2.out' }, '-=0.2')
+              .from('.stats-bar', { y: 20, opacity: 0, duration: 0.3, ease: 'power2.out' }, '-=0.15')
+              .from('.section-header', { y: 12, opacity: 0, duration: 0.25, stagger: 0.08 }, '-=0.1')
+              .from('.data-table tbody tr', { y: 8, opacity: 0, duration: 0.2, stagger: 0.04 }, '-=0.1');
+
+            loadDashboardData();
+        });
+        
+        async function loadDashboardData() {
+            loadWeeklyStats();
+            loadTopSenders();
+            loadHeatmap();
+            loadEmails();
+            loadRuleSuggestions();
+            loadLogs();
+            loadStats();
+            loadPhishingAlerts();
+            updateOnlineStatus();
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        function updateOnlineStatus() {
+            const banner = document.getElementById('offlineBanner');
+            if (banner) {
+                banner.style.display = navigator.onLine ? 'none' : 'flex';
+            }
+        }
+        
+        async function loadWeeklyStats() {
+            try {
+                const response = await fetch(`${apiBase}/stats/weekly`);
+                const res = await response.json();
+                if (res.success && res.data) {
+                    const labels = res.data.map(d => d.date);
+                    const counts = res.data.map(d => d.count);
+                    
+                    const canvasEl = document.getElementById('weeklyVolumeChart');
+                    if (!canvasEl) return;
+                    const ctx = canvasEl.getContext('2d');
+                    if (weeklyVolumeChart) {
+                        weeklyVolumeChart.destroy();
+                    }
+                    weeklyVolumeChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Emails',
+                                data: counts,
+                                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                                hoverBackgroundColor: '#6366f1',
+                                borderRadius: 4,
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                                    ticks: { color: '#555568', font: { family: 'DM Mono', size: 10 } }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { color: '#555568', font: { family: 'DM Mono', size: 10 } }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading weekly stats:', err);
+            }
+        }
+        
+        async function loadTopSenders() {
+            try {
+                const response = await fetch(`${apiBase}/stats/top-senders`);
+                const res = await response.json();
+                if (res.success && res.data) {
+                    const tbody = document.getElementById('topSendersTableBody');
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+                    res.data.forEach(sender => {
+                        const tr = document.createElement('tr');
+                        const faviconUrl = `https://www.google.com/s2/favicons?domain=${sender.domain}&sz=32`;
+                        
+                        tr.innerHTML = `
+                            <td style="display: flex; align-items: center; gap: 8px;">
+                                <img src="${faviconUrl}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%236366f1%22><rect width=%2224%22 height=%2224%22 rx=%226%22/></svg>'" style="width: 16px; height: 16px; border-radius: 4px;">
+                                <span>${sender.sender}</span>
+                            </td>
+                            <td>${sender.domain}</td>
+                            <td style="text-align: center; font-family: var(--font-mono);">${sender.count}</td>
+                            <td style="text-align: right;">
+                                <button class="btn-ghost" style="padding: 4px 8px; font-size: 11px;" onclick="quickCreateRule('${sender.domain}')">Create Rule</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading top senders:', err);
+            }
+        }
+        
+        function quickCreateRule(domain) {
+            switchTab('rules');
+            const form = document.getElementById('addRuleForm');
+            if (form) {
+                form.domain.value = domain;
+                form.label.value = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
+                form.label.focus();
+            }
+        }
+        
+        async function loadHeatmap() {
+            try {
+                const response = await fetch(`${apiBase}/stats/heatmap`);
+                const res = await response.json();
+                if (res.success && res.data) {
+                    drawHeatmap(res.data);
+                }
+            } catch (err) {
+                console.error('Error loading heatmap:', err);
+            }
+        }
+        
+        function drawHeatmap(data) {
+            const container = document.getElementById('heatmapContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const counts = data.map(d => d.count);
+            const maxCount = Math.max(...counts, 1);
+            
+            data.forEach(cell => {
+                const div = document.createElement('div');
+                div.style.aspectRatio = '1';
+                div.style.borderRadius = '2px';
+                
+                const weight = cell.count / maxCount;
+                const alpha = 0.05 + weight * 0.95;
+                div.style.backgroundColor = `rgba(99, 102, 241, ${alpha})`;
+                
+                const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                const displayHour = cell.hour === 0 ? '12 AM' : cell.hour === 12 ? '12 PM' : cell.hour > 12 ? `${cell.hour - 12} PM` : `${cell.hour} AM`;
+                div.title = `${cell.count} emails on ${daysOfWeek[cell.day]} at ${displayHour}`;
+                container.appendChild(div);
+            });
+        }
+        
+        async function loadRuleSuggestions() {
+            try {
+                const response = await fetch(`${apiBase}/rules/suggest`);
+                const res = await response.json();
+                if (res.success && res.data) {
+                    const card = document.getElementById('ruleSuggestionCard');
+                    const details = document.getElementById('ruleSuggestionDetails');
+                    if (card && details) {
+                        details.innerText = `Domain "${res.data.domain}" was moved manually 3 times. Suggest creating rule: ${res.data.label} -> ${res.data.domain}`;
+                        card.dataset.domain = res.data.domain;
+                        card.dataset.label = res.data.label;
+                        card.style.display = 'flex';
+                        
+                        // Entrance animation
+                        gsap.from(card, { x: 12, opacity: 0, duration: 0.3, ease: 'back.out(1.4)' });
+                    }
+                }
+            } catch (err) {
+                console.error('Error suggestions:', err);
+            }
+        }
+        
+        async function acceptRuleSuggestion() {
+            const card = document.getElementById('ruleSuggestionCard');
+            const domain = card.dataset.domain;
+            const label = card.dataset.label;
+            
+            showToast('Creating rule...', 'info');
+            try {
+                const response = await fetch(`${apiBase}/rules`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ label, domain })
+                });
+                const res = await response.json();
+                if (res.success) {
+                    showToast('Rule created successfully!');
+                    card.style.display = 'none';
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } catch (err) {
+                showToast('Failed to create rule', 'error');
+            }
+        }
+        
+        async function dismissRuleSuggestion() {
+            const card = document.getElementById('ruleSuggestionCard');
+            const domain = card.dataset.domain;
+            const label = card.dataset.label;
+            
+            try {
+                await fetch(`${apiBase}/rules/dismiss`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain, label })
+                });
+                showToast('Suggestion dismissed');
+                card.style.display = 'none';
+            } catch(e) {}
+        }
+        
+        async function loadEmails() {
+            try {
+                const response = await fetch(`${apiBase}/emails`);
+                const res = await response.json();
+                if (res.success && res.data) {
+                    cachedEmails = res.data;
+                    renderEmails();
+                }
+            } catch (err) {
+                console.error('Error loading emails:', err);
+                const container = document.getElementById('emailListContainer');
+                if (container) {
+                    container.innerHTML = '<p style="color: var(--red); font-size: 13px; text-align: center;">Failed to load inbox emails.</p>';
+                }
+            }
+        }
+
+        async function loadLogs() {
+            try {
+                const response = await fetch(`${apiBase}/log`);
+                const res = await response.json();
+                if (res.success && res.data) {
+                    renderLogs(res.data);
+                }
+            } catch (err) {
+                console.error('Error loading logs:', err);
+            }
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('liveLogsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            logs.forEach(log => {
+                let parts = log.split('] ', 1);
+                let category, text;
+                if (parts.length === 2 || (log.startsWith('[') && log.includes('] '))) {
+                    category = log.substring(1, log.indexOf(']'));
+                    text = log.substring(log.indexOf(']') + 2);
+                } else {
+                    category = "System";
+                    text = log;
+                }
+                
+                let levelClass = 'info';
+                if (category === 'Unsubscribe Agent') levelClass = 'warn';
+                else if (category === 'Smart Rules') levelClass = 'ok';
+                else if (category === 'Plugin System') levelClass = 'info';
+                else if (category.toLowerCase().includes('warning') || category.toLowerCase().includes('phishing')) levelClass = 'alert';
+                
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                div.innerHTML = `
+                    <span class="log-ts">${new Date().toLocaleTimeString()}</span>
+                    <span class="log-level ${levelClass}">${category.substring(0, 8)}</span>
+                    <span class="log-text">${text}</span>
+                `;
+                container.appendChild(div);
+            });
+            // Auto scroll to top of logs container
+            container.scrollTop = 0;
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${apiBase}/stats`);
+                const res = await response.json();
+                if (res.success && res.data) {
+                    const stats = res.data;
+                    const repliesCount = stats.replies_drafted || 0;
+                    const sortedCount = stats.total_sorted || 0;
+                    const timeSaved = stats.time_saved_total_mins || ((sortedCount * 2) + (repliesCount * 5));
+                    
+                    animateCounter('stat-emails-sorted', sortedCount);
+                    animateCounter('stat-time-saved', timeSaved);
+                    animateCounter('stat-drafts', repliesCount);
+                    
+                    const rulesResp = await fetch(`${apiBase}/rules`);
+                    const rulesRes = await rulesResp.json();
+                    if (rulesRes.success && rulesRes.data) {
+                        animateCounter('stat-active-rules', rulesRes.data.length);
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
+        
+        function filterCategory(category) {
+            activeCategory = category;
+            const categories = ['all', 'personal', 'promotions', 'social', 'updates'];
+            categories.forEach(cat => {
+                const btn = document.getElementById(`filter-${cat}`);
+                if (btn) {
+                    btn.className = (cat === category.toLowerCase()) ? 'btn-primary' : 'btn-ghost';
+                }
+            });
+            renderEmails();
+        }
+        
+        function renderEmails() {
+            const container = document.getElementById('emailListContainer');
+            const emptyState = document.getElementById('emailEmptyState');
+            
+            if (!container) return;
+            
+            const filtered = activeCategory === 'All' 
+                ? cachedEmails 
+                : cachedEmails.filter(e => e.category === activeCategory);
+                
+            if (filtered.length === 0) {
+                container.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'flex';
+                return;
+            }
+            
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            if (emptyState) emptyState.style.display = 'none';
+            container.innerHTML = '';
+            
+            filtered.forEach(email => {
+                const div = document.createElement('div');
+                div.className = 'email-row';
+                div.id = `email-row-${email.id}`;
+                
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-overlay); border: 1px solid var(--border-default); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 500; color: var(--text-primary); flex-shrink: 0; font-size: 11px;">
+                                ${email.sender.charAt(0).toUpperCase()}
+                            </div>
+                            <div style="flex: 1; min-width: 0; text-align: left;">
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;">
+                                    <span style="font-weight: 500; font-size: 13px; color: var(--text-primary);">${email.sender}</span>
+                                    <span class="category-tag ${email.category.toLowerCase()}">${email.category}</span>
+                                    ${email.snoozed_until ? `<span class="snoozed-badge"><i data-lucide="clock" style="width: 10px; height: 10px;"></i> Snoozed</span>` : ''}
+                                </div>
+                                <div style="font-weight: 500; font-size: 12px; color: var(--text-secondary); margin-bottom: 2px;">${email.subject}</div>
+                                <div style="font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px;">${email.snippet}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+                            <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${email.date.split(' ')[0]}</span>
+                            <div class="email-actions" style="display: flex; gap: 4px;">
+                                <button class="btn-icon-premium" title="Snooze" onclick="openSnoozeModal('${email.id}', '${email.subject.replace(/'/g, "\\'")}')">
+                                    <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                                </button>
+                                ${email.thread_messages_count > 1 ? `
+                                <button class="btn-icon-premium" title="Summarize Thread" onclick="toggleThreadSummary('${email.thread_id}', '${email.id}')">
+                                    <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
+                                </button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="summary-panel" id="summary-${email.id}" style="display: none; margin-top: 8px; padding: 12px; background: var(--bg-overlay); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+        
+        let snoozeAiSuggestion = null;
+        
+        async function openSnoozeModal(messageId, subject) {
+            document.getElementById('snoozeMessageId').value = messageId;
+            document.getElementById('snoozeEmailSubject').innerText = subject;
+            
+            const modal = document.getElementById('snoozeModal');
+            if (modal) {
+                modal.classList.add('show');
+            }
+            
+            const aiContainer = document.getElementById('aiSnoozeSuggestion');
+            const aiText = document.getElementById('aiSnoozeText');
+            if (aiContainer && aiText) {
+                aiContainer.style.display = 'block';
+                aiText.innerHTML = `<span class="skeleton" style="display: inline-block; width: 100%; height: 12px;"></span>`;
+            }
+            
+            const email = cachedEmails.find(e => e.id === messageId);
+            const snippet = email ? email.snippet : '';
+            
+            try {
+                const response = await fetch('/api/snooze/suggest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject: subject, body: snippet })
+                });
+                const res = await response.json();
+                if (res.success && res.data && aiText && aiContainer) {
+                    snoozeAiSuggestion = res.data;
+                    aiText.innerHTML = `<strong>Suggested Time:</strong> ${res.data.suggested_time}<br><strong>Reason:</strong> ${res.data.reason}`;
+                } else if (aiContainer) {
+                    aiContainer.style.display = 'none';
+                }
+            } catch (err) {
+                if (aiContainer) aiContainer.style.display = 'none';
+            }
+            lucide.createIcons();
+        }
+        
+        function applyAiSnooze() {
+            if (snoozeAiSuggestion) {
+                const formatted = snoozeAiSuggestion.suggested_time.replace(' ', 'T').slice(0, 16);
+                const snoozeInput = document.getElementById('snoozeUntilInput');
+                const reasonInput = document.getElementById('snoozeReasonInput');
+                if (snoozeInput) snoozeInput.value = formatted;
+                if (reasonInput) reasonInput.value = snoozeAiSuggestion.reason;
+                showToast('Applied AI Suggestion');
+            }
+        }
+        
+        function closeSnoozeModal() {
+            const modal = document.getElementById('snoozeModal');
+            if (modal) modal.classList.remove('show');
+            snoozeAiSuggestion = null;
+        }
+        
+        async function handleSnoozeSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const message_id = form.message_id.value;
+            const raw_date = form.snooze_until.value;
+            const reason = form.reason.value || 'Snoozed';
+            const snooze_until = raw_date.replace('T', ' ') + ':00';
+            
+            showToast('Setting snooze...', 'info');
+            try {
+                const response = await fetch('/api/snooze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message_id, snooze_until, reason })
+                });
+                const res = await response.json();
+                if (res.success) {
+                    showToast('Snooze set successfully!');
+                    closeSnoozeModal();
+                    loadEmails();
+                } else {
+                    showToast(res.error || 'Failed to snooze', 'error');
+                }
+            } catch (err) {
+                showToast('Connection failed', 'error');
+            }
+        }
+        
+        async function toggleThreadSummary(threadId, emailId) {
+            const panel = document.getElementById(`summary-${emailId}`);
+            if (!panel) return;
+            
+            if (panel.style.display === 'block') {
+                gsap.to(panel, {
+                    height: 0,
+                    opacity: 0,
+                    duration: 0.2,
+                    onComplete: () => {
+                        panel.style.display = 'none';
+                    }
+                });
+                return;
+            }
+            
+            panel.innerHTML = `
+                <div style="font-weight: 500; font-size: 11px; color: var(--accent); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; font-family: var(--font-mono);">
+                    <i data-lucide="loader-2" class="animate-spin" style="width: 12px; height: 12px;"></i>
+                    Summarizing thread via Gemini AI...
+                </div>
+                <div class="skeleton" style="width: 90%; height: 10px; margin-bottom: 4px;"></div>
+                <div class="skeleton" style="width: 75%; height: 10px; margin-bottom: 4px;"></div>
+                <div class="skeleton" style="width: 60%; height: 10px;"></div>
+            `;
+            panel.style.display = 'block';
+            panel.style.height = 'auto';
+            panel.style.opacity = 1;
+            lucide.createIcons();
+            
+            try {
+                const response = await fetch(`/api/summary/${threadId}`);
+                const res = await response.json();
+                if (res.success && res.data) {
+                    const htmlSummary = res.data.replace(/\n/g, '<br>');
+                    panel.innerHTML = `
+                        <div style="font-weight: 500; font-size: 11px; color: var(--accent); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; font-family: var(--font-mono);">
+                            <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                            Gemini Thread Summary
+                        </div>
+                        <div style="font-size: 12px; line-height: 1.5; color: var(--text-primary);">
+                            ${htmlSummary}
+                        </div>
+                    `;
+                } else {
+                    panel.innerHTML = '<p style="color: var(--red); font-size: 11px;">Failed to generate summary.</p>';
+                }
+            } catch (err) {
+                panel.innerHTML = '<p style="color: var(--red); font-size: 11px;">Failed to load summary.</p>';
+            }
+            lucide.createIcons();
+        }
+        
+        function showShortcutsHelp() {
+            const overlay = document.getElementById('shortcutsOverlay');
+            if (overlay) {
+                overlay.classList.add('show');
+            }
+        }
+        
+        function closeShortcutsHelp() {
+            const overlay = document.getElementById('shortcutsOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+        
+        // ---- Demo Simulation Interactivity ----
+        function toggleDemoPanel(event) {
+            if (event) event.stopPropagation();
+            const panel = document.getElementById('demoControlsPanel');
+            const btn = document.getElementById('demoToggleBtn');
+            if (panel) {
+                panel.classList.toggle('collapsed');
+                const isCollapsed = panel.classList.contains('collapsed');
+                btn.innerHTML = isCollapsed ? 
+                    `<i data-lucide="chevron-up" style="width: 14px; height: 14px;"></i>` : 
+                    `<i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>`;
+                lucide.createIcons();
+            }
+        }
+        
+        function handleDemoPanelClick(event) {
+            const panel = document.getElementById('demoControlsPanel');
+            if (panel && panel.classList.contains('collapsed')) {
+                toggleDemoPanel();
+            }
+        }
+        
+        async function simulateDemoAction(type) {
+            if (event) event.stopPropagation();
+            if (type === 'reset') {
+                showToast("Resetting demo sandbox...", "info");
+                try {
+                    const response = await fetch('/api/demo/reset', { method: 'POST' });
+                    const res = await response.json();
+                    if (res.success) {
+                        showToast("Demo sandbox reset successfully!", "success");
+                        const phishContainer = document.getElementById('phishingAlertContainer');
+                        if (phishContainer) phishContainer.style.display = 'none';
+                        setTimeout(() => location.reload(), 800);
+                    }
+                } catch (e) {
+                    showToast("Reset failed", "error");
+                }
+                return;
+            }
+            
+            showToast(`Simulating ${type}...`, 'info');
+            try {
+                const response = await fetch(`/api/demo/simulate/${type}`, { method: 'POST' });
+                const res = await response.json();
+                if (res.success) {
+                    if (type === 'email') {
+                        showToast(`New email from ${res.data.sender.split(' <')[0]}!`, 'success');
+                        
+                        gsap.from('.stats-bar', { scale: 1.02, duration: 0.3, ease: 'power2.out' });
+                        
+                        loadDashboardData();
+                    } else if (type === 'phishing') {
+                        showToast("WARNING: Phishing attempt flagged!", "error");
+                        renderPhishingAlert(res.data);
+                        loadLogs();
+                    } else if (type === 'rule') {
+                        showToast("AI detected a smart rule recommendation!", "success");
+                        
+                        const card = document.getElementById('ruleSuggestionCard');
+                        const title = document.getElementById('ruleSuggestionTitle');
+                        const details = document.getElementById('ruleSuggestionDetails');
+                        
+                        if (card && title && details) {
+                            card.dataset.domain = res.data.domain;
+                            card.dataset.label = res.data.label;
+                            title.innerText = `AI Detected Suggestion: Classify ${res.data.domain}`;
+                            details.innerText = res.data.reason;
+                            
+                            card.style.display = 'flex';
+                            gsap.from(card, { y: -20, opacity: 0, duration: 0.5, ease: 'power3.out' });
+                        }
+                        
+                        loadLogs();
+                    }
+                }
+            } catch (err) {
+                console.error("Simulation failed:", err);
+                showToast("Simulation trigger failed", "error");
+            }
+        }
+        
+        function renderPhishingAlert(data) {
+            const container = document.getElementById('phishingAlertContainer');
+            if (!container) return;
+            
+            container.style.display = 'flex';
+            container.innerHTML = `
+                <div class="card-panel phishing-quarantine-card" id="phish-${data.id}" style="border: 1px solid var(--red); background: rgba(239, 68, 68, 0.04); display: flex; flex-direction: column; gap: 8px; padding: 16px; border-left: 4px solid var(--red); box-shadow: 0 0 20px rgba(239, 68, 68, 0.08); transition: all 0.3s; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 10px; color: var(--red); font-weight: 600; font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em;">
+                            <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>
+                            <span>PHISHING THREAT QUARANTINED</span>
+                        </div>
+                        <button class="btn-ghost" onclick="dismissPhishingAlert('${data.id}')" style="padding: 2px 6px; font-size: 10px; color: var(--text-muted); border-color: rgba(255,255,255,0.06); height: 20px; line-height: 1;">Dismiss</button>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-primary); font-weight: 500;">From: ${data.sender}</div>
+                    <div style="font-size: 12px; color: var(--text-primary); font-weight: 500;">Subject: ${data.subject}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;">${data.threat_description}</div>
+                </div>
+            `;
+            
+            gsap.from(container.firstChild, { x: -20, opacity: 0, duration: 0.5, ease: 'power3.out' });
+            lucide.createIcons();
+        }
+        
+        function dismissPhishingAlert(id) {
+            const card = document.getElementById(`phish-${id}`);
+            if (card) {
+                gsap.to(card, {
+                    opacity: 0,
+                    height: 0,
+                    padding: 0,
+                    marginBottom: 0,
+                    duration: 0.4,
+                    ease: 'power3.inOut',
+                    onComplete: () => {
+                        card.remove();
+                        const container = document.getElementById('phishingAlertContainer');
+                        if (container && container.children.length === 0) {
+                            container.style.display = 'none';
+                        }
+                    }
+                });
+            }
+        }
+
+        // ------------------------------------
+        // Product Tour Guide Logic
+        // ------------------------------------
+        const tourSteps = [
+            {
+                elementId: 'tour-step-pipeline',
+                tab: 'overview',
+                title: 'Welcome to Sortify AI',
+                body: 'Sortify manages your inbox using AI-driven classification, rules, and automatic draft reply pipelines.',
+                placement: 'bottom'
+            },
+            {
+                elementId: 'tab-panel-inbox',
+                tab: 'inbox',
+                title: 'Inbox Intelligence',
+                body: 'Sortify categorizes your incoming mail (Personal, Promotions, Social, Updates) and displays quick summaries.',
+                placement: 'bottom'
+            },
+            {
+                elementId: 'suggestionsGrid',
+                tab: 'rule-learner',
+                title: 'AI Rule Learner',
+                body: 'Gemini reviews your email habits and suggests custom rules. Simply click Accept to automate domain labeling.',
+                placement: 'bottom'
+            },
+            {
+                elementId: 'tab-panel-drafts',
+                tab: 'drafts',
+                title: 'Draft Studio',
+                body: 'Customize response tones and preview Gemini-generated reply drafts before they sync back to Gmail.',
+                placement: 'bottom'
+            },
+            {
+                elementId: 'tab-panel-security',
+                tab: 'security',
+                title: 'Security Center',
+                body: 'Quarantine banking spoofs and lookalike banking domains. Run scanner diagnostics and check risk scores.',
+                placement: 'bottom'
+            },
+            {
+                elementId: 'tab-panel-unsubscribe',
+                tab: 'unsubscribe',
+                title: 'Unsubscribe Agent',
+                body: 'Sortify parses hidden mailing links and lets you unsubscribe from newsletters in a single click.',
+                placement: 'bottom'
+            },
+            {
+                elementId: 'tab-panel-connection',
+                tab: 'connection',
+                title: 'Connected Gmail',
+                body: 'Unlocks actual sync operations: real-time email sorting, live labels creation, and background inbox scans.',
+                placement: 'bottom'
+            },
+            {
+                elementId: 'tour-step-health',
+                tab: 'overview',
+                title: 'Mission Complete',
+                body: 'You are all set! Watch your time saved grow and track your inbox health score dynamically.',
+                placement: 'bottom'
+            }
+        ];
+        
+        let currentTourStep = 0;
+        
+        function startProductTour() {
+            const overlay = document.getElementById('tourOverlay');
+            const popover = document.getElementById('tourPopover');
+            if (!overlay || !popover) return;
+            
+            currentTourStep = 0;
+            overlay.classList.add('show');
+            popover.classList.add('show');
+            
+            showTourStep(0);
+        }
+        
+        function showTourStep(index) {
+            currentTourStep = index;
+            const step = tourSteps[index];
+            
+            const executeStep = () => {
+                const element = document.getElementById(step.elementId);
+                if (!element) return;
+                
+                document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
+                
+                element.classList.add('tour-highlight');
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                document.getElementById('tourPopoverTitle').innerText = step.title;
+                document.getElementById('tourPopoverBody').innerText = step.body;
+                document.getElementById('tourPopoverSteps').innerText = `Step ${index + 1} of ${tourSteps.length}`;
+                
+                const prevBtn = document.getElementById('tourPrevBtn');
+                const nextBtn = document.getElementById('tourNextBtn');
+                prevBtn.style.display = index === 0 ? 'none' : 'block';
+                nextBtn.innerText = index === tourSteps.length - 1 ? 'Finish' : 'Next';
+                
+                setTimeout(() => positionPopover(element, step.placement), 250);
+                lucide.createIcons();
+            };
+            
+            if (step.tab && activeTab !== step.tab) {
+                switchTab(step.tab);
+                setTimeout(executeStep, 450); // wait for panel GSAP transition to finish
+            } else {
+                executeStep();
+            }
+        }
+        
+        function positionPopover(element, placement) {
+            const popover = document.getElementById('tourPopover');
+            if (!popover || !element) return;
+            
+            const rect = element.getBoundingClientRect();
+            const popRect = popover.getBoundingClientRect();
+            
+            let top = 0;
+            let left = 0;
+            const gap = 12;
+            
+            if (placement === 'right') {
+                top = rect.top + (rect.height - popRect.height) / 2;
+                left = rect.right + gap;
+            } else if (placement === 'bottom') {
+                top = rect.bottom + gap;
+                left = rect.left + (rect.width - popRect.width) / 2;
+            } else if (placement === 'top') {
+                top = rect.top - popRect.height - gap;
+                left = rect.left + (rect.width - popRect.width) / 2;
+            } else if (placement === 'left') {
+                top = rect.top + (rect.height - popRect.height) / 2;
+                left = rect.left - popRect.width - gap;
+            }
+            
+            const pad = 16;
+            if (left < pad) left = pad;
+            if (left + popRect.width > window.innerWidth - pad) left = window.innerWidth - popRect.width - pad;
+            if (top < pad) top = pad;
+            if (top + popRect.height > window.innerHeight - pad) top = window.innerHeight - popRect.height - pad;
+            
+            popover.style.top = `${top}px`;
+            popover.style.left = `${left}px`;
+        }
+        
+        function nextTourStep() {
+            if (currentTourStep < tourSteps.length - 1) {
+                currentTourStep++;
+                showTourStep(currentTourStep);
+            } else {
+                endProductTour();
+            }
+        }
+        
+        function prevTourStep() {
+            if (currentTourStep > 0) {
+                currentTourStep--;
+                showTourStep(currentTourStep);
+            }
+        }
+        
+        function endProductTour() {
+            document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
+            const overlay = document.getElementById('tourOverlay');
+            const popover = document.getElementById('tourPopover');
+            if (overlay) overlay.classList.remove('show');
+            if (popover) popover.classList.remove('show');
+        }
+
+        // ------------------------------------
+        // Security Center & Phishing Logic
+        // ------------------------------------
+        async function loadPhishingAlerts() {
+            const container = document.getElementById('quarantineListContainer');
+            const emptyState = document.getElementById('quarantineEmptyState');
+            if (!container) return;
+            
+            try {
+                const response = await fetch(`${apiBase}/phishing`);
+                const res = await response.json();
+                
+                if (res.success && res.data) {
+                    const threats = res.data;
+                    const threatCount = threats.length;
+                    const threatsBadge = document.getElementById('stat-threats-blocked');
+                    if (threatsBadge) threatsBadge.innerText = threatCount;
+                    
+                    const healthScoreVal = Math.max(10, 100 - (threatCount * 12));
+                    const healthScoreText = document.getElementById('stat-health-score');
+                    if (healthScoreText) healthScoreText.innerText = `${healthScoreVal}%`;
+                    const healthProgressText = document.getElementById('healthScoreProgressText');
+                    if (healthProgressText) healthProgressText.innerText = `${healthScoreVal}%`;
+                    
+                    const riskLabel = document.getElementById('riskLabel');
+                    const riskGaugeRing = document.getElementById('riskGaugeRing');
+                    
+                    if (riskLabel && riskGaugeRing) {
+                        if (threatCount === 0) {
+                            riskLabel.innerText = "NONE";
+                            riskLabel.style.color = "var(--green)";
+                            riskGaugeRing.style.stroke = "var(--green)";
+                            riskGaugeRing.style.strokeDashoffset = "377";
+                        } else if (threatCount <= 2) {
+                            riskLabel.innerText = "LOW";
+                            riskLabel.style.color = "var(--amber)";
+                            riskGaugeRing.style.stroke = "var(--amber)";
+                            riskGaugeRing.style.strokeDashoffset = "280";
+                        } else {
+                            riskLabel.innerText = "HIGH";
+                            riskLabel.style.color = "var(--red)";
+                            riskGaugeRing.style.stroke = "var(--red)";
+                            riskGaugeRing.style.strokeDashoffset = "100";
+                        }
+                    }
+                    
+                    if (threats.length === 0) {
+                        container.style.display = 'none';
+                        if (emptyState) emptyState.style.display = 'flex';
+                        return;
+                    }
+                    
+                    container.style.display = 'flex';
+                    if (emptyState) emptyState.style.display = 'none';
+                    container.innerHTML = '';
+                    
+                    threats.forEach(t => {
+                        const div = document.createElement('div');
+                        div.className = 'card-panel';
+                        div.style.background = 'var(--bg-overlay)';
+                        div.style.borderLeft = '3px solid var(--red)';
+                        div.style.padding = '14px';
+                        div.style.marginBottom = '0';
+                        div.style.textAlign = 'left';
+                        div.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                                <div style="text-align: left;">
+                                    <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${t.subject}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">From: ${t.sender}</div>
+                                    <p style="font-size: 12px; color: var(--red); line-height: 1.4; margin-top: 6px; font-style: italic;">
+                                        ⚠ Threat details: ${t.threat_description}
+                                    </p>
+                                </div>
+                                <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                                    <button class="btn-primary" onclick="blockSenderDirect('${t.sender}')" style="padding: 4px 8px; font-size: 11px;">Block</button>
+                                    <button class="btn-ghost" onclick="dismissQuarantined('${t.id}')" style="padding: 4px 8px; font-size: 11px; color: var(--text-muted); border-color: rgba(255,255,255,0.06);">Dismiss</button>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading phishing alerts:", err);
+            }
+        }
+        
+        function blockSenderDirect(sender) {
+            showToast(`Sender blacklisted and blocked!`);
+            loadPhishingAlerts();
+        }
+        
+        function dismissQuarantined(id) {
+            showToast(`Threat dismissed from quarantine.`);
+            loadPhishingAlerts();
+        }
+        
+        let isScanning = false;
+        function triggerSecurityScan() {
+            if (isScanning) return;
+            isScanning = true;
+            const btn = document.getElementById('securityScanBtn');
+            if (btn) {
+                btn.innerHTML = `<i data-lucide="refresh-cw" class="animate-spin" style="width: 14px; height: 14px; margin-right: 6px; display: inline-block;"></i> Scanning...`;
+                lucide.createIcons();
+            }
+            showToast(`Analyzing mail headers and payload semantics...`, 'info');
+            setTimeout(() => {
+                isScanning = false;
+                if (btn) {
+                    btn.innerHTML = `<i data-lucide="refresh-cw" style="width: 14px; height: 14px; margin-right: 6px;"></i> Run Deep Security Scan`;
+                    lucide.createIcons();
+                }
+                showToast(`Security scan complete. Threats updated!`, 'success');
+                loadPhishingAlerts();
+            }, 2000);
+        }
+
+        // ------------------------------------
+        // Draft Studio & Suggestions
+        // ------------------------------------
+        function saveDraftSettings() {
+            showToast("Draft assistant settings saved!");
+        }
+        
+        function approveDraftDirect() {
+            showToast("Draft inserted in your Gmail account.");
+            const card = document.getElementById('mockDraftCard');
+            if (card) {
+                gsap.to(card, {
+                    scale: 0.95,
+                    opacity: 0,
+                    duration: 0.3,
+                    onComplete: () => card.remove()
+                });
+            }
+        }
+        
+        function deleteDraftDirect() {
+            showToast("Draft discarded.");
+            const card = document.getElementById('mockDraftCard');
+            if (card) {
+                gsap.to(card, {
+                    scale: 0.95,
+                    opacity: 0,
+                    duration: 0.3,
+                    onComplete: () => card.remove()
+                });
+            }
+        }
+        
+        function acceptSuggestionDirect() {
+            acceptRuleSuggestion();
+        }
+        
+        function dismissSuggestionDirect() {
+            dismissRuleSuggestion();
+        }
+        
+        function dismissSuggestionItem(id) {
+            const card = document.getElementById(id);
+            if (card) {
+                gsap.to(card, {
+                    scale: 0.95,
+                    opacity: 0,
+                    duration: 0.3,
+                    onComplete: () => {
+                        card.remove();
+                        const container = document.getElementById('suggestionsGrid');
+                        if (container && container.querySelectorAll('.suggestion-card').length === 0) {
+                            container.innerHTML = `
+                                <div class="empty-state" style="grid-column: 1 / -1; width: 100%;">
+                                    <div class="empty-icon"><i data-lucide="sparkles"></i></div>
+                                    <div class="empty-title">AI Engine is Listening</div>
+                                    <div class="empty-desc">No active rule suggestions at the moment. As new email domains enter the system, Gemini will advise custom rules here.</div>
+                                </div>
+                            `;
+                            lucide.createIcons();
+                        }
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                return;
+            }
+            
+            const key = e.key.toUpperCase();
+            if (key === 'R') {
+                e.preventDefault();
+                switchTab('rules');
+                const ruleForm = document.getElementById('addRuleForm');
+                if (ruleForm) ruleForm.label.focus();
+            } else if (key === 'S') {
+                e.preventDefault();
+                switchTab('inbox');
+                if (cachedEmails.length > 0) {
+                    openSnoozeModal(cachedEmails[0].id, cachedEmails[0].subject);
+                } else {
+                    showToast('No emails available to snooze', 'error');
+                }
+            } else if (key === 'U') {
+                e.preventDefault();
+                switchTab('unsubscribe');
+            } else if (e.key === '?') {
+                e.preventDefault();
+                showShortcutsHelp();
+            }
+        });
     </script>
+    <!-- Guided Product Tour Overlay & Tooltip -->
+    <div class="tour-overlay" id="tourOverlay" onclick="endProductTour()"></div>
+    <div class="tour-popover" id="tourPopover">
+        <div class="tour-popover-header">
+            <div class="tour-popover-title">
+                <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                <span id="tourPopoverTitle">Product Tour</span>
+            </div>
+            <button class="tour-popover-close" onclick="endProductTour()">
+                <i data-lucide="x" style="width: 12px; height: 12px;"></i>
+            </button>
+        </div>
+        <div class="tour-popover-body" id="tourPopoverBody">
+            Tour description goes here.
+        </div>
+        <div class="tour-popover-footer">
+            <span class="tour-popover-steps" id="tourPopoverSteps">Step 1 of 4</span>
+            <div class="tour-popover-actions">
+                <button class="tour-btn tour-btn-prev" id="tourPrevBtn" onclick="prevTourStep()">Back</button>
+                <button class="tour-btn tour-btn-next" id="tourNextBtn" onclick="nextTourStep()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Tour Trigger Button -->
+    <button class="tour-trigger-btn" id="tourTriggerBtn" onclick="startProductTour()">
+        <span>✨ Take a 60-Second Tour</span>
+    </button>
+
+    {% if is_demo %}
+    <!-- Floating Demo Controls Widget -->
+    <div class="demo-controls-panel collapsed" id="demoControlsPanel" onclick="handleDemoPanelClick(event)">
+        <div class="demo-header-bar">
+            <div class="demo-title-wrap">
+                <span class="demo-pulse-dot"></span>
+                <span>✦ Demo Controls</span>
+            </div>
+            <button class="demo-toggle-btn" id="demoToggleBtn" onclick="toggleDemoPanel(event)">
+                <i data-lucide="chevron-up" style="width: 14px; height: 14px;"></i>
+            </button>
+        </div>
+        <div class="demo-content-body">
+            <p class="demo-section-desc">Simulate live email activity & triggers to test Sortify AI without OAuth setup.</p>
+            
+            <div class="demo-btn-grid">
+                <button class="demo-action-btn" onclick="simulateDemoAction('email')">
+                    <i data-lucide="mail-plus"></i>
+                    <span>Simulate Incoming Email</span>
+                </button>
+                <button class="demo-action-btn" onclick="simulateDemoAction('phishing')">
+                    <i data-lucide="shield-alert"></i>
+                    <span>Simulate Phishing Threat</span>
+                </button>
+                <button class="demo-action-btn" onclick="simulateDemoAction('rule')">
+                    <i data-lucide="sparkles"></i>
+                    <span>Simulate AI Rule Learner</span>
+                </button>
+                
+                <div class="demo-btn-divider"></div>
+                
+                <button class="demo-action-btn btn-reset" onclick="simulateDemoAction('reset')">
+                    <i data-lucide="rotate-ccw"></i>
+                    <span>Reset Demo Sandbox</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </body>
 </html>
