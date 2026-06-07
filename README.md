@@ -1,41 +1,49 @@
-# Sortify AI v2 ✉️🤖
+# ✉️ Sortify AI — Your Inbox. Finally Under Control.
 
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue.svg)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11-6366f1.svg?style=flat-square)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Gemini](https://img.shields.io/badge/gemini-ai-%238b5cf6.svg?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-An open-source, AI-powered email organizer that connects to Gmail, uses Gemini AI to analyze your inbox, and automatically categorizes incoming mail using nested labels and smart rules.
+An open-source, AI-powered Gmail inbox command center that auto-triages, categorizes, drafts smart replies, and unsubscribes newsletters using Gemini AI. Built with Flask, SQLite, and Vanilla HTML/CSS/JS + GSAP.
 
-Sortify AI v2 introduces a self-contained **Demo Mode** for zero-auth evaluation, along with advanced email triage tools like **Smart Snooze**, **Thread Summarizer**, **Inbox Intelligence**, and a **Rule Learning Engine**.
+---
+
+## 📌 GitHub Repository Details (For "About" Section)
+
+If you are setting up your GitHub repository, here is a polished description and a set of tags to use:
+
+* **Description**: `✉️ AI-powered Gmail inbox command center that auto-triages, categorizes, drafts smart replies, and unsubscribes newsletters using Gemini AI. Built with Flask, SQLite, and Vanilla HTML/CSS/JS + GSAP.`
+* **Topics/Tags**: `gmail-api`, `gemini-api`, `flask-app`, `email-triage`, `pwa`, `gsap-animation`, `dark-mode`, `sqlite`, `developer-tools`, `ai-agents`
 
 ---
 
 ## 🌟 Key Features
 
-* **Zero-Auth Demo Mode**: Instantly experience the full features of Sortify AI (including analytics, rules, snoozing, and plugins) without connecting a Google account. Navigate to `/demo` to start.
-* **Smart Snooze**: Snooze emails to clean up your workspace. Powered by Gemini AI, it suggests optimal times to unsnooze based on email body context (e.g., event dates or deadlines).
-* **Thread Summarizer**: Summarize entire conversational threads into clean, action-oriented bullet points using Gemini, cached locally for performance.
-* **Inbox Intelligence**:
-  * **Weekly Volume Chart**: Multi-series bar chart for email ingestion frequency.
-  * **Top Senders Widget**: Tracks high-frequency senders and enables instant one-click rule creation.
-  * **Peak Heatmap Grid**: 7×24 calendar density matrix showing when you receive the most emails.
-* **Rule Learning Engine**: Background analyzer that automatically detects manual email categorization patterns (e.g., moving 3+ emails from a domain to a label) and suggests active rules.
-* **PWA Support**: Full Progressive Web App support (offline warning banner, custom launch icon, standalone frame, and cache-first/network-first caching strategy via Service Worker).
-* **AI Drafts & Auto-Pilot**: Background worker thread checks for new messages, applies rules, checks snooze expiries, and pre-drafts replies.
-* **Plugin System**: Modular plugins, such as the built-in Gemini Phishing/Suspicious Email Detector, to analyze message risks.
+* **✨ Zero-Auth Sandbox Mode**: Explore the full capability of Sortify AI (metrics dashboard, smart rules, templates, sandbox controls, and mock data) immediately without configuring or sharing any real Gmail credentials.
+* **🕰️ Smart Snooze**: Snooze emails out of sight. Powered by Gemini, the system inspects the email body to suggest optimal snooze times (e.g. matching an event date or deadline) and auto-unsnoozes them in the background.
+* **📑 Conversational Thread Summarizer**: Condense long email threads into clean, actionable bullet points, with summaries cached locally for high performance.
+* **📈 Inbox Intelligence Center**:
+  * **Weekly Volume Chart**: Interactive multi-series bar chart tracking email ingestion.
+  * **Top Senders Widget**: Pinpoints high-frequency senders and allows one-click rule creation.
+  * **Peak Heatmap Grid**: A 7×24 grid visualizing hourly and daily email density patterns.
+* **🧠 Rule Learning Engine**: A background analyzer that detects manual movement patterns (e.g., sorting multiple emails from a sender into a custom label) and automatically prompts active rules.
+* **🔒 Security Center & Phishing Shield**: Automatically runs security analyses on incoming mail, quarantines threats, and highlights warning indicators.
+* **📱 Progressive Web App (PWA)**: Full support with standalone windows, customized launch branding, and service-worker caching for high-speed offline capabilities.
+* **🤖 Auto-Pilot Service**: Background worker thread dynamically checks new messages, applies active rules, updates snoozes, and drafts Gemini replies.
 
 ---
 
-## 🏗️ Architecture Flow
+## 🏗️ Architecture
 
 ```
                   ┌─────────────────────────────────────┐
-                  │          Sortify AI v2 Web UI       │
+                  │          Sortify AI Web UI          │
                   │   (HTML/CSS/JS + GSAP Animations)   │
                   │      (PWA Offline Mode / sw.js)     │
                   └──────────┬───────────────┬──────────┘
                              │               │
-                    Real API │               │ Demo Mode
+                    Real API │               │ Sandbox Mode
                      Calls   ▼               ▼ (Zero Auth)
                   ┌──────────┴───────────────┴──────────┐
                   │            Flask Backend            │
@@ -58,32 +66,55 @@ Sortify AI v2 introduces a self-contained **Demo Mode** for zero-auth evaluation
 
 ---
 
-## 🛠️ Tech Stack
+## 📁 Repository Directory Structure
 
-* **Backend**: Python, Flask, Flask-SQLAlchemy (SQLite database `february.db`), Supabase integration (optional rules backup).
-* **Frontend**: HTML5, Vanilla CSS, Vanilla JS, Chart.js (analytics), GSAP (UI animations).
-* **AI**: Google Gemini Flash API (`google-genai` SDK).
-* **PWA**: manifest.json, sw.js service worker.
-* **Containerization**: Docker, Docker Compose.
+```
+Sortify/
+├── app.py                  # Core Flask Application & API Endpoints
+├── demo_data.py            # Sandbox Mode mock data & email simulator
+├── models.py               # Database schemas (Snooze, ActionLogs, Rules)
+├── scanner.py              # Background mail sync & automation engine
+├── services/
+│   └── snooze_service.py   # AI Smart Snooze calculations & expiries
+├── static/
+│   ├── css/
+│   │   ├── design-system.css # Global style tokens (colors, variables)
+│   │   ├── styles.css        # Main Command Center UI styles
+│   │   └── walkthrough.css   # Onboarding tour stylesheet
+│   ├── js/
+│   │   └── animations.js     # GSAP page transitions and particle effects
+│   ├── images/
+│   │   └── favicon.svg       # Brand favicon
+│   └── manifest.json       # PWA Manifest settings
+├── templates/
+│   ├── base.html           # Base layout template
+│   ├── landing.html        # Premium responsive landing page
+│   ├── index.html          # Modular Command Center Dashboard
+│   └── walkthrough.html    # Guided tour layout
+├── tests/                  # Pytest backend test suite
+└── Dockerfile              # Standard Docker deployment configuration
+```
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-* Python 3.10 or 3.11 (highly recommended)
-* A Google Cloud Console project with the Gmail API enabled (for real mode)
-* Gemini API Key from Google AI Studio (for AI features)
+* **Python**: `3.10` or `3.11` (highly recommended)
+* **Google Cloud Console Project**: Gmail API enabled with OAuth Web App client credentials (for Real Mode connection)
+* **Gemini API Key**: From Google AI Studio (for AI triage, summarization, and drafts)
 
-### Local Manual Installation
+---
 
-1. **Clone the repository**:
+### Local Installation
+
+1. **Clone the Repository**
    ```bash
    git clone https://github.com/Piyusha942007/Sortify.git
    cd Sortify
    ```
 
-2. **Set up the virtual environment**:
+2. **Set up Virtual Environment**
    ```bash
    python -m venv venv
    # On Windows:
@@ -92,51 +123,68 @@ Sortify AI v2 introduces a self-contained **Demo Mode** for zero-auth evaluation
    source venv/bin/activate
    ```
 
-3. **Install dependencies**:
+3. **Install Dependencies**
    ```bash
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
-4. **Setup Environment**:
-   Create a `.env` file from the example:
+4. **Setup Environment Configuration**
+   Copy the template environment file:
    ```bash
    cp .env.example .env
    ```
-   * Populate `.env` with your `GEMINI_API_KEY` and Google OAuth credentials.
+   Open the `.env` file and insert your API keys:
+   ```env
+   # Flask Config
+   FLASK_SECRET_KEY=secure-random-key
+   OAUTHLIB_INSECURE_TRANSPORT=1 # Set to 0 in HTTPS production
 
-5. **Run the Application**:
+   # Gemini API Key
+   GEMINI_API_KEY=your-gemini-key
+
+   # Google Client Credentials
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+   GOOGLE_PROJECT_ID=your-project-id
+   GOOGLE_REDIRECT_URI=http://127.0.0.1:5000/oauth2callback
+   ```
+
+5. **Start the Platform**
    ```bash
    python app.py
    ```
-   Open `http://127.0.0.1:5000` for real mode, or `http://127.0.0.1:5000/demo` for Demo Mode.
+   * Open `http://127.0.0.1:5000` to access the Landing Page.
+   * Click **Launch Demo Sandbox** to explore immediately without credentials!
 
 ---
 
 ## 🐳 Docker Deployment
 
-To spin up the containerized environment using Docker Compose:
+The application is fully containerized. To spin up using Docker Compose:
 
-1. Setup your `.env` file first.
-2. Build and run the service:
+1. Configure your `.env` variables as outlined above.
+2. Build and run:
    ```bash
    docker-compose up --build -d
    ```
-3. Access the application at `http://localhost:5000`. The container mounts `february.db` on your local host for persistent storage.
+3. Visit `http://localhost:5000` on your host. The database is persistent and binds to `february.db` in your local directory.
 
 ---
 
 ## 🧪 Testing
 
-Run the test suite using pytest:
+The codebase includes a comprehensive backend validation suite. Run all tests locally:
 ```bash
 python -m pytest tests/ -v
 ```
 
-For guidelines on writing code, adding plugins, or modifying database schemas, refer to the [Contributor Guide](file:///c:/Users/PIYUSHA/OneDrive/Desktop/MyPassionProjects/Sortify/docs/CONTRIBUTING.md).
-
 ---
+
+## 🤝 Contributing
+
+Contributions make the open-source community an amazing place to learn, inspire, and create. Please read our [Contributor Guide](docs/CONTRIBUTING.md) to get started on pull requests, database schema changes, and plugin additions.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Distributed under the MIT License. See `LICENSE` for details.
