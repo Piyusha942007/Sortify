@@ -3,18 +3,52 @@
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11-6366f1.svg?style=flat-square)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/flask-%23000.svg?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Gemini](https://img.shields.io/badge/gemini-ai-%238b5cf6.svg?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Railway-blueviolet.svg?style=flat-square)](https://sortify-production-1ef5.up.railway.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-An open-source, AI-powered Gmail inbox command center that auto-triages, categorizes, drafts smart replies, and unsubscribes newsletters using Gemini AI. Built with Flask, SQLite, and Vanilla HTML/CSS/JS + GSAP.
+**Sortify AI** is a next-generation, open-source email command center that automates email sorting, drafts replies, security audits, and newsletter cleanup. Using the Google Gemini API and advanced background pipeline logic, it turns a cluttered inbox into an organized dashboard.
+
+🌐 **Try the Live App on Railway:** [https://sortify-production-1ef5.up.railway.app/](https://sortify-production-1ef5.up.railway.app/)
+
+---
+
+## 📸 Project Screenshots
+
+### 🌌 Landing Page (Dark Command Center)
+The landing page features custom cinematic lighting, floating interactive particles, and a glowing, animated AI sorting core visualizer.
+![Sortify AI Landing Page](screenshots/landing_hero.png)
+
+### 📊 Mission Control Dashboard
+The main dashboard includes real-time email ingestion metrics, top-sender intelligence widgets, and email priority categorization feeds.
+![Sortify AI Dashboard Overview](screenshots/dashboard_overview.png)
+
+### ⚙️ Rule Learning Engine
+A background analyzer tracks labels and manual email organizational actions to suggest automations that write directly back to Gmail.
+![Sortify AI Smart Rules Control](screenshots/smart_rules.png)
 
 ---
 
 ## 📌 GitHub Repository Details (For "About" Section)
 
-If you are setting up your GitHub repository, here is a polished description and a set of tags to use:
-
+If you are hosting this project, copy-paste these details to your GitHub project page:
 * **Description**: `✉️ AI-powered Gmail inbox command center that auto-triages, categorizes, drafts smart replies, and unsubscribes newsletters using Gemini AI. Built with Flask, SQLite, and Vanilla HTML/CSS/JS + GSAP.`
+* **Website**: `https://sortify-production-1ef5.up.railway.app/`
 * **Topics/Tags**: `gmail-api`, `gemini-api`, `flask-app`, `email-triage`, `pwa`, `gsap-animation`, `dark-mode`, `sqlite`, `developer-tools`, `ai-agents`
+
+---
+
+## 🌟 What is Sortify AI? (Project Overview)
+
+Sortify AI was born out of a simple problem: **inbox overload**. Standard email clients group messages chronologically, forcing developers and professionals to spend hours manually reading, classifying, and drafting replies.
+
+Sortify AI reimagines the inbox as a **Command Center**. By securely integrating with the Gmail API, it runs a background pipeline that:
+1. **Analyzes Intent**: Gemini Flash reads incoming messages to detect their semantic category, urgency, and core highlights.
+2. **Auto-Categorizes**: Moves emails into structured labels (Important, Clients, Promotions, Updates, Spam) automatically.
+3. **Drafts Smart Responses**: Gemini pre-drafts replies matching your personal template preferences, inserting them directly into your Gmail drafts folder.
+4. **Detects Security Risks**: Flags phishing attempts, domain anomalies, and spoofing signatures before they reach you.
+5. **Manages Subscriptions**: Aggregates newsletters and promotions, allowing you to unsubscribe with a single click.
+
+It includes a fully functional **Sandbox/Demo Mode** with mock data and active simulators, letting anyone experience the platform instantly without connecting their Google credentials.
 
 ---
 
@@ -92,6 +126,8 @@ Sortify/
 │   ├── index.html          # Modular Command Center Dashboard
 │   └── walkthrough.html    # Guided tour layout
 ├── tests/                  # Pytest backend test suite
+├── docs/                   # Developer guides & contributing documentation
+├── screenshots/            # Repository image assets for README presentation
 └── Dockerfile              # Standard Docker deployment configuration
 ```
 

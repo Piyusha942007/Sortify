@@ -188,7 +188,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.profile",
     "openid"
 ]
-REDIRECT_URI = "http://127.0.0.1:5000/oauth2callback"
+REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:5000/oauth2callback").strip()
 
 @app.route('/')
 def index():
@@ -476,12 +476,19 @@ def oauth2callback():
     )
     flow.code_verifier = session.get("code_verifier")
 
+    auth_response = request.url
+    if REDIRECT_URI.startswith("https://") and auth_response.startswith("http://"):
+        auth_response = auth_response.replace("http://", "https://", 1)
+
     try:
-        flow.fetch_token(authorization_response=request.url)
+        flow.fetch_token(authorization_response=auth_response)
     except Exception as e:
-        alt_url = request.url.replace("localhost", "127.0.0.1")
-        if alt_url != request.url:
-            flow.fetch_token(authorization_response=alt_url)
+        alt_url = auth_response.replace("localhost", "127.0.0.1") if "localhost" in auth_response else auth_response.replace("127.0.0.1", "localhost")
+        if alt_url != auth_response:
+            try:
+                flow.fetch_token(authorization_response=alt_url)
+            except Exception:
+                raise e
         else:
             raise e
 
