@@ -9,6 +9,7 @@
 **Sortify AI** is a next-generation, open-source email command center that automates email sorting, drafts replies, security audits, and newsletter cleanup. Using the Google Gemini API and advanced background pipeline logic, it turns a cluttered inbox into an organized dashboard.
 
 🌐 **Try the Live App on Railway:** [https://sortify-production-1ef5.up.railway.app/](https://sortify-production-1ef5.up.railway.app/)
+🎥 **Watch the Video Presentation:** [Google Drive Demo Video](https://drive.google.com/file/d/1K4zTXJ9rW7k35phJsfkM-7w7Cm-kLMh7/view?usp=sharing)
 
 ---
 
@@ -25,6 +26,10 @@ The main dashboard includes real-time email ingestion metrics, top-sender intell
 ### ⚙️ Rule Learning Engine
 A background analyzer tracks labels and manual email organizational actions to suggest automations that write directly back to Gmail.
 ![Sortify AI Smart Rules Control](screenshots/smart_rules.png)
+
+### 🔒 Security Center & Phishing Shield
+Automatically runs deep security checks on incoming messages, quarantines threats, and warns users of spoofing behaviors.
+![Sortify AI Security Center](screenshots/security_center.png)
 
 ---
 
