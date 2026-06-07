@@ -474,53 +474,59 @@ def authorize():
 
 @app.route("/oauth2callback")
 def oauth2callback():
-    state = session.get("state")
-    if not state:
-        return redirect(url_for("authorize"))
-
-    flow = Flow.from_client_config(
-        get_google_client_config(),
-        scopes=SCOPES,
-        state=state,
-        redirect_uri=REDIRECT_URI,
-    )
-    flow.code_verifier = session.get("code_verifier")
-
-    auth_response = request.url
-    if REDIRECT_URI.startswith("https://") and auth_response.startswith("http://"):
-        auth_response = auth_response.replace("http://", "https://", 1)
-
     try:
-        flow.fetch_token(authorization_response=auth_response)
-    except Exception as e:
-        alt_url = auth_response.replace("localhost", "127.0.0.1") if "localhost" in auth_response else auth_response.replace("127.0.0.1", "localhost")
-        if alt_url != auth_response:
-            try:
-                flow.fetch_token(authorization_response=alt_url)
-            except Exception:
-                raise e
-        else:
-            raise e
+        state = session.get("state")
+        if not state:
+            return redirect(url_for("authorize"))
 
-    creds = flow.credentials
-    from googleapiclient.discovery import build
-    service = build('oauth2', 'v2', credentials=creds)
-    user_info = service.userinfo().get().execute()
-    
-    google_id = user_info.get('id')
-    email = user_info.get('email')
-    name = user_info.get('name')
-    picture = user_info.get('picture')
-    
-    session.permanent = True
-    session['is_demo'] = False
-    session['google_id'] = google_id
-    session['user_email'] = email
-    session['user_name'] = name
-    session['user_picture'] = picture
-    
-    save_user(google_id, email, name, picture, creds.to_json())
-    return redirect(url_for("dashboard"))
+        flow = Flow.from_client_config(
+            get_google_client_config(),
+            scopes=SCOPES,
+            state=state,
+            redirect_uri=REDIRECT_URI,
+        )
+        flow.code_verifier = session.get("code_verifier")
+
+        auth_response = request.url
+        if REDIRECT_URI.startswith("https://") and auth_response.startswith("http://"):
+            auth_response = auth_response.replace("http://", "https://", 1)
+
+        try:
+            flow.fetch_token(authorization_response=auth_response)
+        except Exception as e:
+            alt_url = auth_response.replace("localhost", "127.0.0.1") if "localhost" in auth_response else auth_response.replace("127.0.0.1", "localhost")
+            if alt_url != auth_response:
+                try:
+                    flow.fetch_token(authorization_response=alt_url)
+                except Exception:
+                    raise e
+            else:
+                raise e
+
+        creds = flow.credentials
+        from googleapiclient.discovery import build
+        service = build('oauth2', 'v2', credentials=creds)
+        user_info = service.userinfo().get().execute()
+        
+        google_id = user_info.get('id')
+        email = user_info.get('email')
+        name = user_info.get('name')
+        picture = user_info.get('picture')
+        
+        session.permanent = True
+        session['is_demo'] = False
+        session['google_id'] = google_id
+        session['user_email'] = email
+        session['user_name'] = name
+        session['user_picture'] = picture
+        
+        save_user(google_id, email, name, picture, creds.to_json())
+        return redirect(url_for("dashboard"))
+    except Exception as e:
+        import traceback
+        err_msg = f"OAuth callback error: {e}\n{traceback.format_exc()}"
+        print(err_msg)
+        return f"<h3>OAuth Authentication Failed</h3><pre>{err_msg}</pre>", 500
 
 @app.route('/demo')
 def demo():
