@@ -513,6 +513,7 @@ def oauth2callback():
     picture = user_info.get('picture')
     
     session.permanent = True
+    session['is_demo'] = False
     session['google_id'] = google_id
     session['user_email'] = email
     session['user_name'] = name
