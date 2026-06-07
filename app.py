@@ -448,6 +448,16 @@ def toggle_plugin():
 # ---- OAuth routes ----
 @app.route("/authorize")
 def authorize():
+    # Auto-redirect host mismatch to prevent session/cookie CSRF state issues (e.g. localhost vs 127.0.0.1)
+    current_host = request.host
+    from urllib.parse import urlparse
+    parsed_redirect = urlparse(REDIRECT_URI)
+    redirect_host = parsed_redirect.netloc
+    
+    if current_host != redirect_host and ("localhost" in current_host or "127.0.0.1" in current_host):
+        target_url = request.url.replace(current_host, redirect_host, 1)
+        return redirect(target_url)
+
     flow = Flow.from_client_config(
         get_google_client_config(),
         scopes=SCOPES,
